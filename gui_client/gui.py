@@ -165,8 +165,6 @@ class MainWindow(Widgets.QWidget):
 
         self.connect_slot()
 
-        self.show()
-
     def init_dictionary(self):
         try:
             CurrentState.set_dict_infos(SocketClient.list_dicts())

@@ -34,6 +34,7 @@ def test_qt():
 def test_window():
     app=QApplication([])
     ex=MainWindow()
+    ex.show()
     app.exec()
 
 
