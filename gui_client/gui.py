@@ -257,8 +257,11 @@ top:50px;
         self.dict_list_widget.itemClicked.connect(self.switch_dict)
         self.index_search_btn.clicked.connect(self.search_index)
         self.index_search_items.itemClicked.connect(self.click_index_search)
-        Widgets.QShortcut(QKeySequence(Qt.Key_Return),self.line_edit).activated.connect(self.lookup)
-        Widgets.QShortcut(QKeySequence(Qt.CTRL+Qt.Key_Return),self.index_line_edit).activated.connect(self.search_index)
+        #Widgets.QShortcut(QKeySequence(Qt.Key_Return),self.line_edit).activated.connect(self.lookup)
+        self.index_line_edit.returnPressed.connect(self.index_search_btn.click)
+        self.line_edit.returnPressed.connect(self.search_button.click)
+        Widgets.QShortcut(QKeySequence(Qt.CTRL+Qt.Key_L),self).activated.connect(
+            lambda :self.line_edit.setFocus() or self.line_edit.selectAll())
         Widgets.QShortcut(QKeySequence.ZoomIn,self.view).activated.connect(self.zoomIn)
         Widgets.QShortcut(QKeySequence.ZoomOut,self.view).activated.connect(self.zoomOut)
 
@@ -310,10 +313,21 @@ top:50px;
     def search_index(self):
         input=self.index_line_edit.text()
         all_words=CurrentState.get_all_words()
-        results=process.extract(input,all_words,limit=10)
-        #results.sort(key=lambda x: x[1],reverse=True)
-        self.index_search_items.insertItems(0,[item[0] for item in results])
+        fzy=True
+        try:
+            subprocess.run(['which','fzy'],check=True)
+        except subprocess.CalledProcessError:
+            fzy=False
 
+        if fzy:
+            results=subprocess.run(['fzy','-e',input],input='\n'.join(all_words),check=True,text=True,capture_output=True).stdout.split('\n')
+            results=results[:20]
+        else:
+            results=process.extract(input,all_words,limit=20)
+            results=[item[0] for item in results]
+        #results.sort(key=lambda x: x[1],reverse=True)
+        self.index_search_items.clear()
+        self.index_search_items.insertItems(0,results)
 
 
     def showMessage(self,msg):
