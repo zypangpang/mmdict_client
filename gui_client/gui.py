@@ -7,7 +7,7 @@ from PyQt5.QtCore import QUrl, QTextStream, QByteArray, QIODevice,Qt
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor, QWebEngineUrlRequestInfo, QWebEngineUrlSchemeHandler, \
     QWebEngineUrlScheme
-from PyQt5.QtWebEngineWidgets import QWebEngineSettings, QWebEnginePage, QWebEngineProfile
+from PyQt5.QtWebEngineWidgets import QWebEngineSettings, QWebEnginePage, QWebEngineProfile, QWebEngineScript
 from PyQt5 import QtWebEngineWidgets, QtCore
 from .socket_client import SocketClient
 from .gui_utils import set_default_font,join_dict_results,pretty_dict_result,get_data_folder_url
@@ -164,6 +164,7 @@ class MainWindow(Widgets.QWidget):
         self.init_layout()
 
         self.connect_slot()
+        self.setWindowTitle("mmDict")
 
     def init_dictionary(self):
         try:
@@ -215,6 +216,10 @@ class MainWindow(Widgets.QWidget):
     def init_webview(self):
         set_default_font("Noto Sans CJK SC",16)
 
+        # disable scroll bar
+        #defaultSettings = QWebEngineSettings.globalSettings()
+        #defaultSettings.setAttribute(QWebEngineSettings.ShowScrollBars,False)
+
         #self.profile=QWebEngineProfile.defaultProfile()
         #handler = self.profile.urlSchemeHandler(ENTRY_SCHEME)
         #if handler is not None:
@@ -258,6 +263,11 @@ top:50px;
         self.index_search_btn.clicked.connect(self.search_index)
         self.index_search_items.itemClicked.connect(self.click_index_search)
         #Widgets.QShortcut(QKeySequence(Qt.Key_Return),self.line_edit).activated.connect(self.lookup)
+        Widgets.QShortcut(QKeySequence(Qt.Key_J),self.view).activated.connect(self.scrollDown)
+        Widgets.QShortcut(QKeySequence(Qt.Key_K),self.view).activated.connect(self.scrollUp)
+        Widgets.QShortcut(QKeySequence(Qt.Key_G),self.view).activated.connect(
+            lambda : self.view.page().runJavaScript("window.scrollTo(0,0);")
+        )
         self.index_line_edit.returnPressed.connect(self.index_search_btn.click)
         self.line_edit.returnPressed.connect(self.search_button.click)
         Widgets.QShortcut(QKeySequence(Qt.CTRL+Qt.Key_L),self).activated.connect(
@@ -275,6 +285,14 @@ top:50px;
         prev=CurrentState.get_prev_entry()
         if prev:
             self.__show_history(prev)
+
+    def scrollDown(self):
+        #cur_pos=self.view.page().scrollPosition()
+        self.view.page().runJavaScript(f"window.scrollBy(0,50);", QWebEngineScript.ApplicationWorld)
+
+    def scrollUp(self):
+        self.view.page().runJavaScript(f"window.scrollBy(0,-50);", QWebEngineScript.ApplicationWorld)
+
 
 
     def zoomIn(self):
@@ -304,6 +322,8 @@ top:50px;
         name,data_folder,definition=CurrentState.get_definition()
         html=pretty_dict_result(name,definition)
         self.page.setHtml(html,get_data_folder_url(data_folder))
+        self.view.setFocus()
+
         CurrentState.add_history(word)
 
         avl_dicts=CurrentState.get_avl_dicts()
@@ -320,7 +340,8 @@ top:50px;
             fzy=False
 
         if fzy:
-            results=subprocess.run(['fzy','-e',input],input='\n'.join(all_words),check=True,text=True,capture_output=True).stdout.split('\n')
+            results=subprocess.run(['fzy','-e',input],input='\n'.join(all_words),
+                                   check=True,text=True,capture_output=True).stdout.split('\n')
             results=results[:20]
         else:
             results=process.extract(input,all_words,limit=20)
