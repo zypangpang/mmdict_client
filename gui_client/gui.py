@@ -149,13 +149,16 @@ class MainWindow(Widgets.QWidget):
         #QWebEngineUrlScheme.registerScheme(QWebEngineUrlScheme(ENTRY_SCHEME))
 
         self.line_edit=Widgets.QLineEdit()
-        self.search_button=Widgets.QPushButton('&Search')
+        self.line_edit.setPlaceholderText("Type word to lookup. [Ctrl+L]")
+        self.search_button=Widgets.QPushButton('&Lookup')
         self.status_bar=Widgets.QStatusBar()
-        self.back_btn=Widgets.QPushButton('Back')
+        self.back_btn=Widgets.QPushButton('&Back')
+        self.help_btn=Widgets.QPushButton('&Help')
         #self.next_btn=Widgets.QPushButton("Next")
         self.dict_list_widget= Widgets.QListWidget()
         self.index_line_edit=Widgets.QLineEdit()
-        self.index_search_btn=Widgets.QPushButton("Sch")
+        self.index_line_edit.setPlaceholderText("index search")
+        self.index_search_btn=Widgets.QPushButton("&Search")
         self.index_search_items=Widgets.QListWidget()
 
         self.init_webview()
@@ -180,6 +183,7 @@ class MainWindow(Widgets.QWidget):
         first_row_layout.addWidget(self.line_edit)
         first_row_layout.addWidget(self.search_button)
         first_row_layout.addWidget(self.back_btn)
+        first_row_layout.addWidget(self.help_btn)
         #first_row_layout.addWidget(self.next_btn)
         layout.addLayout(first_row_layout)
 
@@ -248,9 +252,20 @@ display: table;
 left: 50px;
 top:50px;
 }
+.center {
+    position: fixed;
+  left: 50%;
+  bottom: 0px;
+  transform: translate(-50%, -50%);
+  margin: 0 auto;
+}
+.footer{
+position:absolute;
+bottom:10px;
+}
         """
 
-        self.page.setHtml(f'<style>{style}</style><h1>:-)<br>Welcome to mmDict</h1>')
+        self.page.setHtml(f'<style>{style}</style><h1>:-)<br>Welcome to mmDict</h1><p class="center ">Copyright &copy ZaiyuPang 2020</p>')
 
         #self.interceptor=MyUrlRequestInterceptor()
         #self.profile.setUrlRequestInterceptor(self.interceptor)
@@ -259,6 +274,7 @@ top:50px;
         self.search_button.clicked.connect(self.lookup)
         self.page.linkHovered.connect(self.showMessage)
         self.back_btn.clicked.connect(self.history_back)
+        self.help_btn.clicked.connect(self.show_help)
         self.dict_list_widget.itemClicked.connect(self.switch_dict)
         self.index_search_btn.clicked.connect(self.search_index)
         self.index_search_items.itemClicked.connect(self.click_index_search)
@@ -274,6 +290,30 @@ top:50px;
             lambda :self.line_edit.setFocus() or self.line_edit.selectAll())
         Widgets.QShortcut(QKeySequence.ZoomIn,self.view).activated.connect(self.zoomIn)
         Widgets.QShortcut(QKeySequence.ZoomOut,self.view).activated.connect(self.zoomOut)
+
+    def show_help(self):
+        msgBox=Widgets.QMessageBox()
+        msgBox.setWindowTitle("Help")
+        msgBox.setText('''
+[ mmDict: yet another mdict client ]
+Author: pangzaiyu@163.com
+
+Keyboard shortcuts:
+    Enter: Lookup/Search
+    Alt+L/S/H/B: Lookup, Search, Help, Back
+    Ctrl+L: focus input line edit
+    j/k: Scroll down/up
+    g: Back to top
+
+It is recommended to install "fzy" for quick index search on Linux/macOS, since the Python implementation is quite slow.
+
+Acknowledgement:
+    The mdict parse codes are from:
+    https://bitbucket.org/xwang/mdict-analysis
+    https://github.com/zhansliu/writemdict
+    Great thanks to their work.
+''')
+        msgBox.exec()
 
     def __show_history(self,item):
         name, data_folder = CurrentState.get_cur_dict_info()
