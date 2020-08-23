@@ -65,7 +65,7 @@ class CurrentState():
         avl_dicts=cls.get_avl_dicts()
         if not avl_dicts:
             cls.cur_dict_name=None
-        elif cls.cur_dict_name not in avl_dicts:
+        else: #cls.cur_dict_name not in avl_dicts:
             cls.cur_dict_name=avl_dicts[0]
 
     @classmethod
@@ -323,6 +323,7 @@ top:50px;
         html=pretty_dict_result(name,definition)
         self.page.setHtml(html,get_data_folder_url(data_folder))
         self.view.setFocus()
+        self.view.page().runJavaScript("window.scrollTo(0,0);")
 
         CurrentState.add_history(word)
 
