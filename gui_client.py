@@ -1,54 +1,53 @@
-from PyQt5.QtCore import QUrl, QDir
-from PyQt5.QtGui import QFontDatabase
-from PyQt5.QtWebEngineWidgets import QWebEngineSettings, QWebEnginePage
 from PyQt5.QtWidgets import QApplication
-from PyQt5 import QtWebEngineWidgets
-from PyQt5 import QtCore
-from gui_client.socket_client import SocketClient
 from gui_client.gui import MainWindow
+import constants
+import fire
 
 #from signal import signal, SIGPIPE,  SIG_IGN
 #signal(SIGPIPE, SIG_IGN)
 
-
-def test_qt():
-    #header='<meta charset="UTF-8"/>\n'
-    _,record=lookup("mouse")
-    #print(QDir.currentPath())
-    #print(record)
-    #record=header+record
-    app=QApplication([])
-    set_default_font()
-    view = QtWebEngineWidgets.QWebEngineView()
-    page=MyWebPage()
-    view.setPage(page)
-    baseUrl = QUrl.fromLocalFile(QDir.currentPath() + "/index.html")
-    print(baseUrl)
-    page.setHtml(record,baseUrl)
-    #view.load(QUrl("file://t.html"))
-    #load_css_js_from_file('css',view,"LDOCE6.css","ld6")
-    #load_css_js_from_file('js',view,"entry.js","entry")
-    view.show()
-    app.exec_()
-
-def test_window():
+def run_gui():
     app=QApplication([])
     ex=MainWindow()
     ex.show()
     app.exec()
 
+class Main:
+    def run(self,dict_host=None,dict_port=None,http_host=None,http_port=None):
+        if not dict_host:
+            print("dict_host is required.")
+            return
+        constants.DICT_HOST=dict_host
+        if dict_host=='unix':
+            if not http_host or not http_port:
+                print("http_host and http_port is required.")
+                return
+            constants.HTTP_HOST=http_host
+            constants.HTTP_PORT=int(http_port)
+        else:
+            if not dict_port:
+                print("dict_port is required.")
+                return
+            constants.DICT_PORT=int(dict_port)
 
-def test_client():
-    q=QUrl("entry: abc")
-    print(q.toString().split(":")[1].strip("/ "))
-    print(q.scheme())
-    print(q.host())
-    print(q.path())
-    print(q.fragment())
+            if not http_host:
+                print("Use dict_host as http_host.")
+                constants.HTTP_HOST=dict_host
+            else:
+                constants.HTTP_HOST=http_host
+
+            if not http_port:
+                print("http_port is required.")
+                return
+            constants.HTTP_PORT=int(http_port)
+
+        run_gui()
+
+
+
 
 
 if __name__ == '__main__':
-    #output(300)
-    test_window()
+    fire.Fire(Main)
 
 

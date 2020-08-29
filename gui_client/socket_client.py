@@ -6,9 +6,29 @@ from constants import FRONT_END
 class SocketClient():
     front_end=FRONT_END.QTWEBENGINE
     @classmethod
-    def __request(cls, data):
+    def __request(cls,data):
+        if constants.DICT_HOST=='unix':
+            return cls.__request_unix(data)
+        else:
+            return cls.__request_inet(data)
+
+    @classmethod
+    def __request_unix(cls, data):
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
             sock.connect(constants.SOCKET_LOCATION)
+            sock.sendall(data.encode("utf-8"))
+            msg_list = []
+            while True:
+                msg = sock.recv(8192)
+                if not msg:
+                    break
+                msg_list.append(msg)
+        return b"".join(msg_list).decode("utf-8")
+
+    @classmethod
+    def __request_inet(cls,data):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((constants.DICT_HOST,constants.DICT_PORT))
             sock.sendall(data.encode("utf-8"))
             msg_list = []
             while True:

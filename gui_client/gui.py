@@ -1,4 +1,4 @@
-import  logging,subprocess
+import  logging,subprocess,requests,io
 from constants import SOUND_PLAYER
 from pathlib import Path
 from fuzzywuzzy import process
@@ -11,6 +11,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineSettings, QWebEnginePage, QWebEng
 from PyQt5 import QtWebEngineWidgets, QtCore
 from .socket_client import SocketClient
 from .gui_utils import set_default_font,join_dict_results,pretty_dict_result,get_data_folder_url
+from playsound import playsound
 
 '''
 class MyUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
@@ -112,6 +113,15 @@ class CurrentState():
             return cls.cur_dict_name, cls.dictionaries[cls.cur_dict_name][1]
         return "",""
 
+def httpPlaySound(sound_path,dict_name):
+    print(f"http://localhost:8000/{dict_name}/{sound_path}")
+
+    r=requests.get(f"http://localhost:8000/{dict_name}/{sound_path}")
+    with open("/tmp/mmdict_sound.tmp",'wb') as f:
+        f.write(r.content)
+    command=[SOUND_PLAYER, "/tmp/mmdict_sound.tmp"]
+    # os.system(SOUND_PLAYER+" "+str(Path(data_folder).joinpath(item)))
+    subprocess.Popen(command)
 
 class MyWebPage(QWebEnginePage):
     def acceptNavigationRequest(self, url: QUrl, type: QWebEnginePage.NavigationType, isMainFrame: bool, **kwargs):
@@ -127,10 +137,11 @@ class MyWebPage(QWebEnginePage):
                 CurrentState.add_history(item)
             elif url.scheme() == 'sound':
                 item=url.toString().split("://")[1].lower()
-                _, data_folder=CurrentState.get_cur_dict_info()
-                command=[SOUND_PLAYER, str(Path(data_folder).joinpath(item))]
+                name, data_folder=CurrentState.get_cur_dict_info()
+                httpPlaySound(item,name)
+                #command=[SOUND_PLAYER, str(Path(data_folder).joinpath(item))]
                 #os.system(SOUND_PLAYER+" "+str(Path(data_folder).joinpath(item)))
-                subprocess.Popen(command)
+                #subprocess.Popen(command)
 
             return False
 
@@ -345,27 +356,27 @@ Acknowledgement:
 
     def switch_dict(self,cur_item):
         dict_name=cur_item.text()
-        name,data_folder,value=CurrentState.get_definition(dict_name)
-        CurrentState.reset_history()
-        self.page.setHtml(pretty_dict_result(name,value),get_data_folder_url(data_folder))
-        CurrentState.add_history(CurrentState.word)
+        self.__show_definition(dict_name)
 
     def click_index_search(self,cur_item):
         self.line_edit.setText(cur_item.text())
         self.lookup()
 
+    def __show_definition(self,dict_name):
+        name, data_folder, value = CurrentState.get_definition(dict_name)
+        CurrentState.reset_history()
+        #self.page.setHtml(html,get_data_folder_url(data_folder))
+        self.page.setHtml(pretty_dict_result(name, value), QUrl(f"http://localhost:8000/{name}/"))
+        CurrentState.add_history(CurrentState.word)
+        self.view.page().runJavaScript("window.scrollTo(0,0);")
+
 
     def lookup(self):
         word=self.line_edit.text().strip()
+        if not word: return
         result_obj=SocketClient.lookup(word)
         CurrentState.reset(word,result_obj)
-        name,data_folder,definition=CurrentState.get_definition()
-        html=pretty_dict_result(name,definition)
-        self.page.setHtml(html,get_data_folder_url(data_folder))
-        self.view.setFocus()
-        self.view.page().runJavaScript("window.scrollTo(0,0);")
-
-        CurrentState.add_history(word)
+        self.__show_definition(None)
 
         avl_dicts=CurrentState.get_avl_dicts()
         self.dict_list_widget.clear()
