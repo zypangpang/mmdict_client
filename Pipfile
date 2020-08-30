@@ -8,11 +8,9 @@ verify_ssl = true
 [packages]
 pyqt5 = "*"
 pyqtwebengine = "*"
-fuzzywuzzy = "*"
-python-levenshtein = "*"
 beautifulsoup4 = "*"
 lxml = "*"
 requests = "*"
 
 [requires]
-python_version = "3.8"
+python_version = "3.6"

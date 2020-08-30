@@ -1,9 +1,7 @@
 import  logging,subprocess,requests,io
-from constants import SOUND_PLAYER
-from pathlib import Path
-from fuzzywuzzy import process
+import configs
 import PyQt5.QtWidgets as Widgets
-from PyQt5.QtCore import QUrl, QTextStream, QByteArray, QIODevice,Qt
+from PyQt5.QtCore import QUrl, QTextStream, QByteArray, QIODevice,pyqtSignal,Qt
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor, QWebEngineUrlRequestInfo, QWebEngineUrlSchemeHandler, \
     QWebEngineUrlScheme
@@ -11,7 +9,6 @@ from PyQt5.QtWebEngineWidgets import QWebEngineSettings, QWebEnginePage, QWebEng
 from PyQt5 import QtWebEngineWidgets, QtCore
 from .socket_client import SocketClient
 from .gui_utils import set_default_font,join_dict_results,pretty_dict_result,get_data_folder_url
-from playsound import playsound
 
 '''
 class MyUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
@@ -42,13 +39,13 @@ class CurrentState():
     result_obj={}
     all_words=None
 
-    @classmethod
-    def get_all_words(cls):
-        if not cls.cur_dict_name:
-            return []
-        if not cls.all_words:
-            cls.all_words=SocketClient.list_words(cls.cur_dict_name)
-        return cls.all_words
+    #@classmethod
+    #def get_all_words(cls):
+    #    if not cls.cur_dict_name:
+    #        return []
+    #    if not cls.all_words:
+    #        cls.all_words=SocketClient.search_word_index(cls.cur_dict_name)
+    #    return cls.all_words
 
     @classmethod
     def set_dict_infos(cls,dicts):
@@ -111,19 +108,26 @@ class CurrentState():
     def get_cur_dict_info(cls):
         if cls.cur_dict_name:
             return cls.cur_dict_name, cls.dictionaries[cls.cur_dict_name][1]
+        if len(cls.dict_names) > 0:
+            cls.set_cur_dict(cls.dict_names[0])
+            return cls.cur_dict_name,cls.dictionaries[cls.cur_dict_name][1]
         return "",""
 
 def httpPlaySound(sound_path,dict_name):
-    print(f"http://localhost:8000/{dict_name}/{sound_path}")
+    addr=f"{configs.HTTP_SCHEME}://{configs.HTTP_HOST}:{configs.HTTP_PORT}/{dict_name}/{sound_path}"
+    print(addr)
 
-    r=requests.get(f"http://localhost:8000/{dict_name}/{sound_path}")
+    r=requests.get(addr)
     with open("/tmp/mmdict_sound.tmp",'wb') as f:
         f.write(r.content)
-    command=[SOUND_PLAYER, "/tmp/mmdict_sound.tmp"]
+    command=[configs.SOUND_PLAYER, "/tmp/mmdict_sound.tmp"]
     # os.system(SOUND_PLAYER+" "+str(Path(data_folder).joinpath(item)))
     subprocess.Popen(command)
+    #if res.returncode != 0:
+    #    raise Exception(f"{configs.SOUND_PLAYER} play sound error. Check both the program and sound file.")
 
 class MyWebPage(QWebEnginePage):
+    play_sound_error_sig=pyqtSignal(str)
     def acceptNavigationRequest(self, url: QUrl, type: QWebEnginePage.NavigationType, isMainFrame: bool, **kwargs):
         if type == QWebEnginePage.NavigationTypeLinkClicked:
             if url.scheme() == 'entry':
@@ -136,9 +140,14 @@ class MyWebPage(QWebEnginePage):
                 self.setHtml(raw_html,self.url())
                 CurrentState.add_history(item)
             elif url.scheme() == 'sound':
-                item=url.toString().split("://")[1].lower()
+                item=url.toString().split("://")[1]
                 name, data_folder=CurrentState.get_cur_dict_info()
-                httpPlaySound(item,name)
+                try:
+                    httpPlaySound(item,name)
+                except Exception as e:
+                    self.play_sound_error_sig.emit(str(e))
+                    print(f"play sound error = {e}")
+
                 #command=[SOUND_PLAYER, str(Path(data_folder).joinpath(item))]
                 #os.system(SOUND_PLAYER+" "+str(Path(data_folder).joinpath(item)))
                 #subprocess.Popen(command)
@@ -154,6 +163,7 @@ class MainWindow(Widgets.QWidget):
     def __init__(self):
         super().__init__()
 
+        self.http_prefix=f"{configs.HTTP_SCHEME}://{configs.HTTP_HOST}:{configs.HTTP_PORT}"
         self.zoom_factor=1
         self.init_dictionary()
 
@@ -284,6 +294,7 @@ bottom:10px;
     def connect_slot(self):
         self.search_button.clicked.connect(self.lookup)
         self.page.linkHovered.connect(self.showMessage)
+        self.page.play_sound_error_sig.connect(lambda e: self.showMessage(e))
         self.back_btn.clicked.connect(self.history_back)
         self.help_btn.clicked.connect(self.show_help)
         self.dict_list_widget.itemClicked.connect(self.switch_dict)
@@ -366,7 +377,7 @@ Acknowledgement:
         name, data_folder, value = CurrentState.get_definition(dict_name)
         CurrentState.reset_history()
         #self.page.setHtml(html,get_data_folder_url(data_folder))
-        self.page.setHtml(pretty_dict_result(name, value), QUrl(f"http://localhost:8000/{name}/"))
+        self.page.setHtml(pretty_dict_result(name, value), QUrl(f"{self.http_prefix}/{name}/"))
         CurrentState.add_history(CurrentState.word)
         self.view.page().runJavaScript("window.scrollTo(0,0);")
 
@@ -384,7 +395,12 @@ Acknowledgement:
 
     def search_index(self):
         input=self.index_line_edit.text()
-        all_words=CurrentState.get_all_words()
+        dict_name, _ = CurrentState.get_cur_dict_info()
+        if not dict_name:
+            self.index_search_items.clear()
+            return
+        all_words=SocketClient.search_word_index(dict_name,input)
+        '''
         fzy=True
         try:
             subprocess.run(['which','fzy'],check=True)
@@ -398,9 +414,10 @@ Acknowledgement:
         else:
             results=process.extract(input,all_words,limit=20)
             results=[item[0] for item in results]
+        '''
         #results.sort(key=lambda x: x[1],reverse=True)
         self.index_search_items.clear()
-        self.index_search_items.insertItems(0,results)
+        self.index_search_items.insertItems(0,all_words)
 
 
     def showMessage(self,msg):

@@ -1,0 +1,8 @@
+DICT_HOST="localhost"
+DICT_PORT=9999
+
+HTTP_SCHEME="http"
+HTTP_HOST="localhost"
+HTTP_PORT=8000
+
+SOUND_PLAYER='mpv'
