@@ -1,14 +1,14 @@
-import  logging,subprocess,requests,io
+import logging,subprocess,requests,io
 import configs
 import PyQt5.QtWidgets as Widgets
-from PyQt5.QtCore import QUrl, QTextStream, QByteArray, QIODevice,pyqtSignal,Qt
+from PyQt5.QtCore import QUrl, pyqtSignal, Qt, QEvent
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor, QWebEngineUrlRequestInfo, QWebEngineUrlSchemeHandler, \
     QWebEngineUrlScheme
 from PyQt5.QtWebEngineWidgets import QWebEngineSettings, QWebEnginePage, QWebEngineProfile, QWebEngineScript
 from PyQt5 import QtWebEngineWidgets, QtCore
 from .socket_client import SocketClient
-from .gui_utils import set_default_font,join_dict_results,pretty_dict_result,get_data_folder_url
+from .gui_utils import set_default_font,pretty_dict_result
 
 '''
 class MyUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
@@ -128,14 +128,19 @@ def httpPlaySound(sound_path,dict_name):
 
 class MyWebPage(QWebEnginePage):
     play_sound_error_sig=pyqtSignal(str)
+    #text_selected=pyqtSignal(str)
     def acceptNavigationRequest(self, url: QUrl, type: QWebEnginePage.NavigationType, isMainFrame: bool, **kwargs):
         if type == QWebEnginePage.NavigationTypeLinkClicked:
             if url.scheme() == 'entry':
                 _, item = url.toString().split(":")
                 item = item.strip("/ ")
                 dict_name,data_folder=CurrentState.get_cur_dict_info()
+                #try:
                 result_obj: dict = SocketClient.lookup(item,[dict_name])
-                raw_html = pretty_dict_result(dict_name,result_obj[dict_name])
+                raw_html = pretty_dict_result(dict_name,result_obj.get(dict_name,"No entry found"))
+                #except Exception as e:
+                #    print(f"Lookup {item} error = {e}")
+                #    return False
                 #print(self.url())
                 self.setHtml(raw_html,self.url())
                 CurrentState.add_history(item)
@@ -155,6 +160,17 @@ class MyWebPage(QWebEnginePage):
             return False
 
         return True
+
+    '''
+    def event(self, event: QtCore.QEvent) -> bool:
+        if event.type()==QEvent.MouseButtonDblClick:
+            text=self.selectedText().strip()
+            if text:
+                print(text)
+                self.text_selected.emit(text)
+        return super().event(event)
+    '''
+
 
 ENTRY_SCHEME=b"entry"
 
@@ -295,12 +311,13 @@ bottom:10px;
         self.search_button.clicked.connect(self.lookup)
         self.page.linkHovered.connect(self.showMessage)
         self.page.play_sound_error_sig.connect(lambda e: self.showMessage(e))
+        self.page.selectionChanged.connect(self.search_selected)
         self.back_btn.clicked.connect(self.history_back)
         self.help_btn.clicked.connect(self.show_help)
         self.dict_list_widget.itemClicked.connect(self.switch_dict)
         self.index_search_btn.clicked.connect(self.search_index)
         self.index_search_items.itemClicked.connect(self.click_index_search)
-        #Widgets.QShortcut(QKeySequence(Qt.Key_Return),self.line_edit).activated.connect(self.lookup)
+        Widgets.QShortcut(QKeySequence(Qt.CTRL+Qt.Key_Return),self.line_edit).activated.connect(self.lookup)
         Widgets.QShortcut(QKeySequence(Qt.Key_J),self.view).activated.connect(self.scrollDown)
         Widgets.QShortcut(QKeySequence(Qt.Key_K),self.view).activated.connect(self.scrollUp)
         Widgets.QShortcut(QKeySequence(Qt.Key_G),self.view).activated.connect(
@@ -338,10 +355,10 @@ Acknowledgement:
         msgBox.exec()
 
     def __show_history(self,item):
-        name, data_folder = CurrentState.get_cur_dict_info()
+        name, _ = CurrentState.get_cur_dict_info()
         result_obj = SocketClient.lookup(item, [name])
         html = pretty_dict_result(name, result_obj.get(name, "No entry found"))
-        self.page.setHtml(html, get_data_folder_url(data_folder))
+        self.page.setHtml(html, QUrl(f"{self.http_prefix}/{name}/"))
 
     def history_back(self):
         prev=CurrentState.get_prev_entry()
@@ -381,17 +398,27 @@ Acknowledgement:
         CurrentState.add_history(CurrentState.word)
         self.view.page().runJavaScript("window.scrollTo(0,0);")
 
+    def search_selected(self):
+        text=self.page.selectedText().strip()
+        if text:
+            self.line_edit.setText(text)
+            #self.__lookup(text)
+
+    def __lookup(self,word):
+        result_obj = SocketClient.lookup(word)
+        CurrentState.reset(word, result_obj)
+        self.__show_definition(None)
+
+        avl_dicts = CurrentState.get_avl_dicts()
+        self.dict_list_widget.clear()
+        self.dict_list_widget.insertItems(0, avl_dicts)
 
     def lookup(self):
         word=self.line_edit.text().strip()
-        if not word: return
-        result_obj=SocketClient.lookup(word)
-        CurrentState.reset(word,result_obj)
-        self.__show_definition(None)
+        if not word:
+            return
+        self.__lookup(word)
 
-        avl_dicts=CurrentState.get_avl_dicts()
-        self.dict_list_widget.clear()
-        self.dict_list_widget.insertItems(0,avl_dicts)
 
     def search_index(self):
         input=self.index_line_edit.text()
