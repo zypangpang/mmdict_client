@@ -7,3 +7,4 @@
 *.log
 .idea/
 *__pycache__*
+configs.py
