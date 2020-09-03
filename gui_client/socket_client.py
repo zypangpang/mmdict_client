@@ -38,6 +38,13 @@ class SocketClient():
                     break
                 msg_list.append(msg)
         return b"".join(msg_list).decode("utf-8")
+    @classmethod
+    def __general_tweak(cls,result_obj):
+        for key,val in result_obj.items():
+            if val.startswith("@@@LINK="):
+                word=val[8:].strip()
+                entry=f'<A href="entry://{word}">{word}</A>'
+                result_obj[key]=f"SEE: {entry}"
 
     @classmethod
     def __tweak_for_qt_webengine(cls,result_obj):
@@ -64,9 +71,10 @@ class SocketClient():
             data=data+","+','.join(dicts)
         recv_data=cls.__request(data)
         r_obj=json.loads(recv_data)
-        #print(r_obj)
+        #print(r_obj['USE THE RIGHT WORD'])
         if raw:
             return r_obj
+        cls.__general_tweak(r_obj)
         if cls.front_end==FRONT_END.QTWEBENGINE:
             return cls.__tweak_for_qt_webengine(r_obj)
         elif cls.front_end==FRONT_END.CONSOLE:
