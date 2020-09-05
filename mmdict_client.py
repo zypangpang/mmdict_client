@@ -27,6 +27,10 @@ class Main():
         for dict, value in result_obj.items():
             print(f"\033[1m<{dict}>\033[0m")
             print(value)
+    @classmethod
+    def test(cls):
+        result=SocketClient.test()
+        print(result)
 
 
 

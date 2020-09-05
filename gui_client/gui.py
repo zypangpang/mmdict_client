@@ -32,7 +32,6 @@ class EntrySchemeHandler(QWebEngineUrlSchemeHandler):
 '''
 class CurrentState():
     word=None
-    dictionaries={}
     dict_names=[]
     cur_dict_name=None
     history=[]
@@ -49,9 +48,10 @@ class CurrentState():
 
     @classmethod
     def set_dict_infos(cls,dicts):
-        for dict in dicts:
-            cls.dictionaries[dict[0]]=dict[1:]
-            cls.dict_names.append(dict[0])
+        cls.dict_names=dicts
+        #for dict in dicts:
+        #    cls.dictionaries[dict[0]]=dict[1:]
+        #    cls.dict_names.append(dict[0])
 
         cls.cur_dict_name=cls.dict_names[0]
 
@@ -96,22 +96,24 @@ class CurrentState():
             cls.cur_dict_name=dict_name
             cls.all_words=None
 
-        dict_name,data_folder=cls.get_cur_dict_info()
-        return dict_name,data_folder,cls.result_obj.get(dict_name,"No entry found")
+        return cls.cur_dict_name,cls.result_obj.get(cls.cur_dict_name,"No entry found")
 
 
     @classmethod
     def set_cur_dict(cls,name):
         cls.cur_dict_name=name
-
     @classmethod
-    def get_cur_dict_info(cls):
-        if cls.cur_dict_name:
-            return cls.cur_dict_name, cls.dictionaries[cls.cur_dict_name][1]
-        if len(cls.dict_names) > 0:
-            cls.set_cur_dict(cls.dict_names[0])
-            return cls.cur_dict_name,cls.dictionaries[cls.cur_dict_name][1]
-        return "",""
+    def get_cur_dict(cls):
+        return cls.cur_dict_name
+
+    #@classmethod
+    #def get_cur_dict_info(cls):
+    #    if cls.cur_dict_name:
+    #        return cls.cur_dict_name, cls.dictionaries[cls.cur_dict_name][1]
+    #    if len(cls.dict_names) > 0:
+    #        cls.set_cur_dict(cls.dict_names[0])
+    #        return cls.cur_dict_name,cls.dictionaries[cls.cur_dict_name][1]
+    #    return "",""
 
 def httpPlaySound(sound_path,dict_name):
     addr=f"{configs.HTTP_SCHEME}://{configs.HTTP_HOST}:{configs.HTTP_PORT}/{dict_name}/{sound_path}"
@@ -134,7 +136,7 @@ class MyWebPage(QWebEnginePage):
             if url.scheme() == 'entry':
                 _, item = url.toString().split(":")
                 item = item.strip("/ ")
-                dict_name,data_folder=CurrentState.get_cur_dict_info()
+                dict_name=CurrentState.get_cur_dict()
                 #try:
                 result_obj: dict = SocketClient.lookup(item,[dict_name])
                 raw_html = pretty_dict_result(dict_name,result_obj.get(dict_name,"No entry found"))
@@ -146,7 +148,7 @@ class MyWebPage(QWebEnginePage):
                 CurrentState.add_history(item)
             elif url.scheme() == 'sound':
                 item=url.toString().split("://")[1]
-                name, data_folder=CurrentState.get_cur_dict_info()
+                name=CurrentState.get_cur_dict()
                 try:
                     httpPlaySound(item,name)
                 except Exception as e:
@@ -355,7 +357,7 @@ Acknowledgement:
         msgBox.exec()
 
     def __show_history(self,item):
-        name, _ = CurrentState.get_cur_dict_info()
+        name = CurrentState.get_cur_dict()
         result_obj = SocketClient.lookup(item, [name])
         html = pretty_dict_result(name, result_obj.get(name, "No entry found"))
         self.page.setHtml(html, QUrl(f"{self.http_prefix}/{name}/"))
@@ -391,7 +393,7 @@ Acknowledgement:
         self.lookup()
 
     def __show_definition(self,dict_name):
-        name, data_folder, value = CurrentState.get_definition(dict_name)
+        name,  value = CurrentState.get_definition(dict_name)
         CurrentState.reset_history()
         #self.page.setHtml(html,get_data_folder_url(data_folder))
         self.page.setHtml(pretty_dict_result(name, value), QUrl(f"{self.http_prefix}/{name}/"))
@@ -422,7 +424,7 @@ Acknowledgement:
 
     def search_index(self):
         input=self.index_line_edit.text()
-        dict_name, _ = CurrentState.get_cur_dict_info()
+        dict_name = CurrentState.get_cur_dict()
         if not dict_name:
             self.index_search_items.clear()
             return

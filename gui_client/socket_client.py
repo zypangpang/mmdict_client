@@ -74,7 +74,7 @@ class SocketClient():
         #print(r_obj['USE THE RIGHT WORD'])
         if raw:
             return r_obj
-        cls.__general_tweak(r_obj)
+        #cls.__general_tweak(r_obj)
         if cls.front_end==FRONT_END.QTWEBENGINE:
             return cls.__tweak_for_qt_webengine(r_obj)
         elif cls.front_end==FRONT_END.CONSOLE:
@@ -91,6 +91,11 @@ class SocketClient():
     def search_word_index(cls,dict_name,word):
         data=f"ListWord:{dict_name.strip()},{word.strip()}"
         return cls.__request(data).split(',')
+
+    @classmethod
+    def test(cls):
+        data="Test"
+        return cls.__request(data)
 
 
 
