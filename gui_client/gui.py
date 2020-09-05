@@ -304,7 +304,8 @@ bottom:10px;
 }
         """
 
-        self.page.setHtml(f'<style>{style}</style><h1>:-)<br>Welcome to mmDict</h1><p class="center ">Copyright &copy ZaiyuPang 2020</p>')
+        #self.page.setHtml(f'<style>{style}</style><h1>:-)<br>Welcome to mmDict</h1><p class="center ">Copyright &copy ZaiyuPang 2020</p>')
+        self.page.setHtml(f'<style>{style}</style><h1>:-)<br>Welcome to mmDict</h1>')
 
         #self.interceptor=MyUrlRequestInterceptor()
         #self.profile.setUrlRequestInterceptor(self.interceptor)
@@ -345,8 +346,7 @@ Keyboard shortcuts:
     Ctrl+L: focus input line edit
     j/k: Scroll down/up
     g: Back to top
-
-It is recommended to install "fzy" for quick index search on Linux/macOS, since the Python implementation is quite slow.
+    Ctrl+Plus/Minus: Zoom out/in
 
 Acknowledgement:
     The mdict parse codes are from:
