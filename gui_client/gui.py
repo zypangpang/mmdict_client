@@ -9,6 +9,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineSettings, QWebEnginePage, QWebEng
 from PyQt5 import QtWebEngineWidgets, QtCore
 from .socket_client import SocketClient
 from .gui_utils import set_default_font,pretty_dict_result
+from .work_thread import LookupThread
 
 '''
 class MyUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
@@ -129,23 +130,44 @@ def httpPlaySound(sound_path,dict_name):
     #    raise Exception(f"{configs.SOUND_PLAYER} play sound error. Check both the program and sound file.")
 
 class MyWebPage(QWebEnginePage):
+    lookupThread=LookupThread(None)
     play_sound_error_sig=pyqtSignal(str)
+
+    def show_result(self,word,result_obj):
+        dict_name = CurrentState.get_cur_dict()
+        raw_html = pretty_dict_result(dict_name, result_obj.get(dict_name, "No entry found"))
+        # except Exception as e:
+        #    print(f"Lookup {item} error = {e}")
+        #    return False
+        # print(self.url())
+        self.setHtml(raw_html, self.url())
+        CurrentState.add_history(word)
+
     #text_selected=pyqtSignal(str)
     def acceptNavigationRequest(self, url: QUrl, type: QWebEnginePage.NavigationType, isMainFrame: bool, **kwargs):
         if type == QWebEnginePage.NavigationTypeLinkClicked:
             if url.scheme() == 'entry':
-                _, item = url.toString().split(":")
+                try:
+                    _, item = url.toString().split(":")
+                except:
+                    return False
                 item = item.strip("/ ")
                 dict_name=CurrentState.get_cur_dict()
+                self.lookupThread.word=item
+                self.lookupThread.dicts=[dict_name]
+                self.lookupThread.result_ready.connect(self.show_result)
+                self.lookupThread.start()
+                #dict_name=CurrentState.get_cur_dict()
                 #try:
-                result_obj: dict = SocketClient.lookup(item,[dict_name])
-                raw_html = pretty_dict_result(dict_name,result_obj.get(dict_name,"No entry found"))
+                #result_obj: dict = SocketClient.lookup(item,[dict_name])
+                #raw_html = pretty_dict_result(dict_name,result_obj.get(dict_name,"No entry found"))
                 #except Exception as e:
                 #    print(f"Lookup {item} error = {e}")
                 #    return False
                 #print(self.url())
-                self.setHtml(raw_html,self.url())
-                CurrentState.add_history(item)
+                #self.setHtml(raw_html,self.url())
+                #CurrentState.add_history(item)
+
             elif url.scheme() == 'sound':
                 item=url.toString().split("://")[1]
                 name=CurrentState.get_cur_dict()
@@ -199,6 +221,9 @@ class MainWindow(Widgets.QWidget):
         self.index_line_edit.setPlaceholderText("index search")
         self.index_search_btn=Widgets.QPushButton("&Search")
         self.index_search_items=Widgets.QListWidget()
+
+
+        self.lookupThread = LookupThread(None)
 
         self.init_webview()
 
@@ -347,20 +372,19 @@ Keyboard shortcuts:
     j/k: Scroll down/up
     g: Back to top
     Ctrl+Plus/Minus: Zoom out/in
-
-Acknowledgement:
-    The mdict parse codes are from:
-    https://bitbucket.org/xwang/mdict-analysis
-    https://github.com/zhansliu/writemdict
-    Great thanks to their work.
 ''')
         msgBox.exec()
 
     def __show_history(self,item):
         name = CurrentState.get_cur_dict()
-        result_obj = SocketClient.lookup(item, [name])
-        html = pretty_dict_result(name, result_obj.get(name, "No entry found"))
-        self.page.setHtml(html, QUrl(f"{self.http_prefix}/{name}/"))
+        self.lookupThread.word=item
+        self.lookupThread.dicts=[name]
+        self.lookupThread.result_ready.disconnect()
+        self.lookupThread.result_ready.connect(self.page.show_result)
+        self.lookupThread.start()
+        #result_obj = SocketClient.lookup(item, [name])
+        #html = pretty_dict_result(name, result_obj.get(name, "No entry found"))
+        #self.page.setHtml(html, QUrl(f"{self.http_prefix}/{name}/"))
 
     def history_back(self):
         prev=CurrentState.get_prev_entry()
@@ -406,14 +430,29 @@ Acknowledgement:
             self.line_edit.setText(text)
             #self.__lookup(text)
 
-    def __lookup(self,word):
-        result_obj = SocketClient.lookup(word)
+    def __show_result(self,word,result_obj):
         CurrentState.reset(word, result_obj)
         self.__show_definition(None)
 
         avl_dicts = CurrentState.get_avl_dicts()
         self.dict_list_widget.clear()
         self.dict_list_widget.insertItems(0, avl_dicts)
+
+        self.progress.deleteLater()
+
+    def __lookup(self,word):
+        self.progress = Widgets.QProgressDialog("Searching...", None, 0, 0, self)
+        self.progress.setWindowModality(Qt.WindowModal)
+        self.progress.setMinimumDuration(500)
+
+        self.progress.setValue(0)
+        #self.progress.show()
+        self.lookupThread.word=word
+        self.lookupThread.dicts=None
+        #self.lookupThread.result_ready.disconnect()
+        self.lookupThread.result_ready.connect(self.__show_result)
+        #self.lookupThread.finished.connect(self.lookupThread.deleteLater)
+        self.lookupThread.start()
 
     def lookup(self):
         word=self.line_edit.text().strip()
