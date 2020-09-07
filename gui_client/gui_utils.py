@@ -1,10 +1,30 @@
 from pathlib import Path
 
 from PyQt5 import QtWebEngineWidgets, QtCore
-from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import QUrl,Qt
 from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtWebEngineWidgets import QWebEngineSettings
+import PyQt5.QtWidgets as Widgets
+import configs
+import requests,subprocess
 
+class ProgressDialog:
+    progress=None
+    @classmethod
+    def show_progress(cls,parent,title):
+        cls.progress = Widgets.QProgressDialog(title, None, 0, 0, parent)
+        cls.progress.setWindowModality(Qt.WindowModal)
+        cls.progress.setMinimumDuration(500)
+        cls.progress.setValue(0)
+
+    @classmethod
+    def hide_progress(cls):
+        try:
+            cls.progress.close()
+            cls.progress.deleteLater()
+            cls.progress=None
+        except:
+            print("progress delete failed")
 
 def set_default_font(font,size):
     fontDataBase = QFontDatabase()
@@ -69,3 +89,17 @@ def join_dict_results(result_obj):
 def get_data_folder_url(data_folder):
     #return QUrl.fromLocalFile(str(Path(data_folder).joinpath("index.html")))
     return QUrl.fromLocalFile(data_folder+"/index.html")
+
+def httpPlaySound(sound_path,dict_name):
+    addr=f"{configs.HTTP_SCHEME}://{configs.HTTP_HOST}:{configs.HTTP_PORT}/{dict_name}/{sound_path}"
+    print(addr)
+
+    r=requests.get(addr)
+    with open("/tmp/mmdict_sound.tmp",'wb') as f:
+        f.write(r.content)
+    command=[configs.SOUND_PLAYER, "/tmp/mmdict_sound.tmp"]
+    # os.system(SOUND_PLAYER+" "+str(Path(data_folder).joinpath(item)))
+    subprocess.Popen(command)
+    #if res.returncode != 0:
+    #    raise Exception(f"{configs.SOUND_PLAYER} play sound error. Check both the program and sound file.")
+

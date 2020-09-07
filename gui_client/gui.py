@@ -1,15 +1,15 @@
-import logging,subprocess,requests,io
+import logging
 import configs
 import PyQt5.QtWidgets as Widgets
-from PyQt5.QtCore import QUrl, pyqtSignal, Qt, QEvent
+from PyQt5.QtCore import QUrl, pyqtSignal, Qt
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor, QWebEngineUrlRequestInfo, QWebEngineUrlSchemeHandler, \
-    QWebEngineUrlScheme
-from PyQt5.QtWebEngineWidgets import QWebEngineSettings, QWebEnginePage, QWebEngineProfile, QWebEngineScript
-from PyQt5 import QtWebEngineWidgets, QtCore
+from PyQt5.QtWebEngineWidgets import  QWebEngineScript
+from PyQt5 import QtWebEngineWidgets
 from .socket_client import SocketClient
-from .gui_utils import set_default_font,pretty_dict_result
-from .work_thread import LookupThread
+from .gui_utils import set_default_font,pretty_dict_result,ProgressDialog
+from .work_thread import LookupThread, IndexSearchThread
+from .current_state import CurrentState
+from .MyWebPage import MyWebPage
 
 '''
 class MyUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
@@ -31,169 +31,7 @@ class EntrySchemeHandler(QWebEngineUrlSchemeHandler):
         buf.close()
         request.reply(b"text/html", buf)
 '''
-class CurrentState():
-    word=None
-    dict_names=[]
-    cur_dict_name=None
-    history=[]
-    result_obj={}
-    all_words=None
 
-    #@classmethod
-    #def get_all_words(cls):
-    #    if not cls.cur_dict_name:
-    #        return []
-    #    if not cls.all_words:
-    #        cls.all_words=SocketClient.search_word_index(cls.cur_dict_name)
-    #    return cls.all_words
-
-    @classmethod
-    def set_dict_infos(cls,dicts):
-        cls.dict_names=dicts
-        #for dict in dicts:
-        #    cls.dictionaries[dict[0]]=dict[1:]
-        #    cls.dict_names.append(dict[0])
-
-        cls.cur_dict_name=cls.dict_names[0]
-
-    @classmethod
-    def reset(cls,word,result_obj):
-        cls.word=word
-        cls.result_obj=result_obj
-        cls.history=[]
-        avl_dicts=cls.get_avl_dicts()
-        if not avl_dicts:
-            cls.cur_dict_name=None
-        else: #cls.cur_dict_name not in avl_dicts:
-            cls.cur_dict_name=avl_dicts[0]
-
-    @classmethod
-    def reset_history(cls):
-        cls.history=[]
-
-    @classmethod
-    def get_avl_dicts(cls):
-        ans=[]
-        for name in cls.dict_names:
-            if name in cls.result_obj:
-                ans.append(name)
-        return ans
-
-    @classmethod
-    def add_history(cls,entry):
-        cls.history.append(entry)
-
-    @classmethod
-    def get_prev_entry(cls):
-        if len(cls.history)>1:
-            cls.history.pop()
-            return cls.history[-1]
-        return None
-
-
-    @classmethod
-    def get_definition(cls,dict_name=None):
-        if dict_name:
-            cls.cur_dict_name=dict_name
-            cls.all_words=None
-
-        return cls.cur_dict_name,cls.result_obj.get(cls.cur_dict_name,"No entry found")
-
-
-    @classmethod
-    def set_cur_dict(cls,name):
-        cls.cur_dict_name=name
-    @classmethod
-    def get_cur_dict(cls):
-        return cls.cur_dict_name
-
-    #@classmethod
-    #def get_cur_dict_info(cls):
-    #    if cls.cur_dict_name:
-    #        return cls.cur_dict_name, cls.dictionaries[cls.cur_dict_name][1]
-    #    if len(cls.dict_names) > 0:
-    #        cls.set_cur_dict(cls.dict_names[0])
-    #        return cls.cur_dict_name,cls.dictionaries[cls.cur_dict_name][1]
-    #    return "",""
-
-def httpPlaySound(sound_path,dict_name):
-    addr=f"{configs.HTTP_SCHEME}://{configs.HTTP_HOST}:{configs.HTTP_PORT}/{dict_name}/{sound_path}"
-    print(addr)
-
-    r=requests.get(addr)
-    with open("/tmp/mmdict_sound.tmp",'wb') as f:
-        f.write(r.content)
-    command=[configs.SOUND_PLAYER, "/tmp/mmdict_sound.tmp"]
-    # os.system(SOUND_PLAYER+" "+str(Path(data_folder).joinpath(item)))
-    subprocess.Popen(command)
-    #if res.returncode != 0:
-    #    raise Exception(f"{configs.SOUND_PLAYER} play sound error. Check both the program and sound file.")
-
-class MyWebPage(QWebEnginePage):
-    lookupThread=LookupThread(None)
-    play_sound_error_sig=pyqtSignal(str)
-
-    def show_result(self,word,result_obj):
-        dict_name = CurrentState.get_cur_dict()
-        raw_html = pretty_dict_result(dict_name, result_obj.get(dict_name, "No entry found"))
-        # except Exception as e:
-        #    print(f"Lookup {item} error = {e}")
-        #    return False
-        # print(self.url())
-        self.setHtml(raw_html, self.url())
-        CurrentState.add_history(word)
-
-    #text_selected=pyqtSignal(str)
-    def acceptNavigationRequest(self, url: QUrl, type: QWebEnginePage.NavigationType, isMainFrame: bool, **kwargs):
-        if type == QWebEnginePage.NavigationTypeLinkClicked:
-            if url.scheme() == 'entry':
-                try:
-                    _, item = url.toString().split(":")
-                except:
-                    return False
-                item = item.strip("/ ")
-                dict_name=CurrentState.get_cur_dict()
-                self.lookupThread.word=item
-                self.lookupThread.dicts=[dict_name]
-                self.lookupThread.result_ready.connect(self.show_result)
-                self.lookupThread.start()
-                #dict_name=CurrentState.get_cur_dict()
-                #try:
-                #result_obj: dict = SocketClient.lookup(item,[dict_name])
-                #raw_html = pretty_dict_result(dict_name,result_obj.get(dict_name,"No entry found"))
-                #except Exception as e:
-                #    print(f"Lookup {item} error = {e}")
-                #    return False
-                #print(self.url())
-                #self.setHtml(raw_html,self.url())
-                #CurrentState.add_history(item)
-
-            elif url.scheme() == 'sound':
-                item=url.toString().split("://")[1]
-                name=CurrentState.get_cur_dict()
-                try:
-                    httpPlaySound(item,name)
-                except Exception as e:
-                    self.play_sound_error_sig.emit(str(e))
-                    print(f"play sound error = {e}")
-
-                #command=[SOUND_PLAYER, str(Path(data_folder).joinpath(item))]
-                #os.system(SOUND_PLAYER+" "+str(Path(data_folder).joinpath(item)))
-                #subprocess.Popen(command)
-
-            return False
-
-        return True
-
-    '''
-    def event(self, event: QtCore.QEvent) -> bool:
-        if event.type()==QEvent.MouseButtonDblClick:
-            text=self.selectedText().strip()
-            if text:
-                print(text)
-                self.text_selected.emit(text)
-        return super().event(event)
-    '''
 
 
 ENTRY_SCHEME=b"entry"
@@ -205,7 +43,7 @@ class MainWindow(Widgets.QWidget):
 
         self.http_prefix=f"{configs.HTTP_SCHEME}://{configs.HTTP_HOST}:{configs.HTTP_PORT}"
         self.zoom_factor=1
-        self.init_dictionary()
+        #self.init_dictionary()
 
         #QWebEngineUrlScheme.registerScheme(QWebEngineUrlScheme(ENTRY_SCHEME))
 
@@ -223,7 +61,8 @@ class MainWindow(Widgets.QWidget):
         self.index_search_items=Widgets.QListWidget()
 
 
-        self.lookupThread = LookupThread(None)
+        self.lookupThread = LookupThread()
+        self.indexSearchThread = IndexSearchThread()
 
         self.init_webview()
 
@@ -238,8 +77,8 @@ class MainWindow(Widgets.QWidget):
             CurrentState.set_dict_infos(SocketClient.list_dicts())
         except Exception as e:
             logging.error(e)
-            logging.error("It seems the mmdict daemon is not running. Please first run the daemon.")
-            exit(1)
+
+
 
     def init_layout(self):
         layout = Widgets.QVBoxLayout()
@@ -336,6 +175,8 @@ bottom:10px;
         #self.profile.setUrlRequestInterceptor(self.interceptor)
 
     def connect_slot(self):
+        self.lookupThread.result_ready.connect(self.__show_result)
+        self.indexSearchThread.result_ready.connect(self.__show_search_index_results)
         self.search_button.clicked.connect(self.lookup)
         self.page.linkHovered.connect(self.showMessage)
         self.page.play_sound_error_sig.connect(lambda e: self.showMessage(e))
@@ -375,12 +216,19 @@ Keyboard shortcuts:
 ''')
         msgBox.exec()
 
+    def __show_history_result(self,word,result_obj):
+        name = CurrentState.get_cur_dict()
+        html = pretty_dict_result(name, result_obj.get(name, "No entry found"))
+        self.page.setHtml(html, QUrl(f"{self.http_prefix}/{name}/"))
+        ProgressDialog.hide_progress()
+
     def __show_history(self,item):
+        ProgressDialog.show_progress(self,"Loading...")
         name = CurrentState.get_cur_dict()
         self.lookupThread.word=item
         self.lookupThread.dicts=[name]
         self.lookupThread.result_ready.disconnect()
-        self.lookupThread.result_ready.connect(self.page.show_result)
+        self.lookupThread.result_ready.connect(self.__show_history_result)
         self.lookupThread.start()
         #result_obj = SocketClient.lookup(item, [name])
         #html = pretty_dict_result(name, result_obj.get(name, "No entry found"))
@@ -438,18 +286,14 @@ Keyboard shortcuts:
         self.dict_list_widget.clear()
         self.dict_list_widget.insertItems(0, avl_dicts)
 
-        self.progress.deleteLater()
+        ProgressDialog.hide_progress()
 
     def __lookup(self,word):
-        self.progress = Widgets.QProgressDialog("Searching...", None, 0, 0, self)
-        self.progress.setWindowModality(Qt.WindowModal)
-        self.progress.setMinimumDuration(500)
-
-        self.progress.setValue(0)
+        ProgressDialog.show_progress(self,f"Looking up {word}...")
         #self.progress.show()
         self.lookupThread.word=word
         self.lookupThread.dicts=None
-        #self.lookupThread.result_ready.disconnect()
+        self.lookupThread.result_ready.disconnect()
         self.lookupThread.result_ready.connect(self.__show_result)
         #self.lookupThread.finished.connect(self.lookupThread.deleteLater)
         self.lookupThread.start()
@@ -461,13 +305,23 @@ Keyboard shortcuts:
         self.__lookup(word)
 
 
+    def __show_search_index_results(self,word,all_words):
+        self.index_search_items.clear()
+        self.index_search_items.insertItems(0, all_words)
+        ProgressDialog.hide_progress()
+
     def search_index(self):
-        input=self.index_line_edit.text()
+        input=self.index_line_edit.text().strip()
+        if not input:
+            return
         dict_name = CurrentState.get_cur_dict()
         if not dict_name:
             self.index_search_items.clear()
             return
-        all_words=SocketClient.search_word_index(dict_name,input)
+        ProgressDialog.show_progress(self,f"Searching {input}...")
+        self.indexSearchThread.word=input
+        self.indexSearchThread.dict_name=dict_name
+        self.indexSearchThread.start()
         '''
         fzy=True
         try:
@@ -484,8 +338,8 @@ Keyboard shortcuts:
             results=[item[0] for item in results]
         '''
         #results.sort(key=lambda x: x[1],reverse=True)
-        self.index_search_items.clear()
-        self.index_search_items.insertItems(0,all_words)
+        #self.index_search_items.clear()
+        #self.index_search_items.insertItems(0,all_words)
 
 
     def showMessage(self,msg):
