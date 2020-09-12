@@ -6,6 +6,7 @@ import fire
 from gui_client.current_state import CurrentState
 from gui_client.gui_utils import ProgressDialog
 from gui_client.work_thread import InitDictThread
+import signal
 
 #from signal import signal, SIGINT,  SIGTERM
 #signal(SIGTERM, lambda : exit(0))
@@ -57,6 +58,7 @@ class Main:
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
     fire.Fire(Main)
 
 
