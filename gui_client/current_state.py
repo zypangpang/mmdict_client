@@ -1,3 +1,8 @@
+from enum import Enum
+class STATUS(Enum):
+    FAIL=1
+    NO_ENTRY=2
+    SUCCESS=0
 
 class CurrentState():
     word=None
@@ -5,6 +10,19 @@ class CurrentState():
     cur_dict_name=None
     history=[]
     result_obj={}
+    result_state = STATUS.SUCCESS
+
+    @classmethod
+    def set_noentry_state(cls):
+        cls.result_state=STATUS.NO_ENTRY
+
+    @classmethod
+    def clear_state(cls):
+        cls.result_state=STATUS.SUCCESS
+
+    @classmethod
+    def is_no_entry_state(cls):
+        return cls.result_state==STATUS.NO_ENTRY
 
     @classmethod
     def set_dict_infos(cls,dicts):

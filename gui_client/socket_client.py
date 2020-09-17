@@ -39,6 +39,13 @@ class SocketClient():
                 msg_list.append(msg)
         return b"".join(msg_list).decode("utf-8")
     @classmethod
+    def __assemble_cmd(cls,command,**kwargs):
+        return json.dumps({
+            "command":command,
+            "kwargs":kwargs
+        })
+
+    @classmethod
     def __general_tweak(cls,result_obj):
         for key,val in result_obj.items():
             if val.startswith("@@@LINK="):
@@ -66,31 +73,37 @@ class SocketClient():
 
     @classmethod
     def lookup(cls,word,dicts=None,raw=False):
-        data = f"Lookup:{word}"
-        if dicts:
-            data=data+","+','.join(dicts)
+        data=cls.__assemble_cmd("Lookup",word=word,dicts=dicts) if dicts else cls.__assemble_cmd("Lookup",word=word)
+            #data=data+","+','.join(dicts)
         recv_data=cls.__request(data)
-        r_obj=json.loads(recv_data)
+        return_obj=json.loads(recv_data)
+        if return_obj['status_code'] == 1:
+            return return_obj
         #print(r_obj['USE THE RIGHT WORD'])
         if raw:
-            return r_obj
+            return return_obj
+
+        r_obj=return_obj['results']
         #cls.__general_tweak(r_obj)
         if cls.front_end==FRONT_END.QTWEBENGINE:
-            return cls.__tweak_for_qt_webengine(r_obj)
+            return_obj['results']=cls.__tweak_for_qt_webengine(r_obj)
         elif cls.front_end==FRONT_END.CONSOLE:
-            return cls.__tweak_for_console(r_obj)
-        return r_obj
+            return_obj['results']=cls.__tweak_for_console(r_obj)
+
+        return return_obj
 
 
     @classmethod
     def list_dicts(cls,enabled=True):
-        data=f"ListDicts:{int(enabled)}"
+        #data=f"ListDicts:{int(enabled)}"
+        data=cls.__assemble_cmd("ListDicts",enabled=enabled)
         return json.loads(cls.__request(data))
 
     @classmethod
     def search_word_index(cls,dict_name,word):
-        data=f"ListWord:{dict_name.strip()},{word.strip()}"
-        return cls.__request(data).split(',')
+        #data=f"ListWord:{dict_name.strip()},{word.strip()}"
+        data=cls.__assemble_cmd("ListWord",dict_name=dict_name.strip(),word=word.strip())
+        return json.loads(cls.__request(data))
 
     @classmethod
     def test(cls):

@@ -17,7 +17,7 @@ ex = MainWindow()
 
 def show_mainwindow(dicts):
     ProgressDialog.hide_progress()
-    if not dicts:
+    if not dicts or dicts['status_code']!=0:
         QtWidgets.QMessageBox.critical(ex,"Error",
                                        "It seems the mmdict daemon is not running."
                                        " Please first run the daemon. Click OK to exit.")
@@ -29,7 +29,7 @@ def show_mainwindow(dicts):
         #msgBox.
 
     else:
-        CurrentState.set_dict_infos(dicts)
+        CurrentState.set_dict_infos(dicts['results'])
         ex.show()
 
 initThread=InitDictThread()

@@ -17,7 +17,7 @@ class LookupThread(QThread):
         self.result_ready.emit(self.word,result_obj)
 
 class IndexSearchThread(QThread):
-    result_ready=pyqtSignal(str,list)
+    result_ready=pyqtSignal(str,dict)
     def __init__(self):
         super().__init__()
         self.word=None
@@ -30,7 +30,7 @@ class IndexSearchThread(QThread):
         self.result_ready.emit(self.word,all_words)
 
 class InitDictThread(QThread):
-    result_ready=pyqtSignal(list)
+    result_ready=pyqtSignal(dict)
 
     def __init__(self):
         super().__init__()

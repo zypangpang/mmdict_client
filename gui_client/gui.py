@@ -177,15 +177,21 @@ bottom:10px;
     def connect_slot(self):
         self.lookupThread.result_ready.connect(self.__show_result)
         self.indexSearchThread.result_ready.connect(self.__show_search_index_results)
-        self.search_button.clicked.connect(self.lookup)
+
         self.page.linkHovered.connect(self.showMessage)
         self.page.play_sound_error_sig.connect(lambda e: self.showMessage(e))
+        self.page.search_all.connect(self.__lookup)
         self.page.selectionChanged.connect(self.search_selected)
+
+        self.search_button.clicked.connect(self.lookup)
         self.back_btn.clicked.connect(self.history_back)
         self.help_btn.clicked.connect(self.show_help)
-        self.dict_list_widget.itemClicked.connect(self.switch_dict)
         self.index_search_btn.clicked.connect(self.search_index)
+
+        self.dict_list_widget.itemClicked.connect(self.switch_dict)
+
         self.index_search_items.itemClicked.connect(self.click_index_search)
+
         Widgets.QShortcut(QKeySequence(Qt.CTRL+Qt.Key_Return),self.line_edit).activated.connect(self.lookup)
         Widgets.QShortcut(QKeySequence(Qt.Key_J),self.view).activated.connect(self.scrollDown)
         Widgets.QShortcut(QKeySequence(Qt.Key_K),self.view).activated.connect(self.scrollUp)
@@ -218,7 +224,7 @@ Keyboard shortcuts:
 
     def __show_history_result(self,word,result_obj):
         name = CurrentState.get_cur_dict()
-        html = pretty_dict_result(name, result_obj.get(name, "No entry found"))
+        html = pretty_dict_result(name, result_obj['results'].get(name, "No entry found"))
         self.page.setHtml(html, QUrl(f"{self.http_prefix}/{name}/"))
         ProgressDialog.hide_progress()
 
@@ -279,6 +285,12 @@ Keyboard shortcuts:
             #self.__lookup(text)
 
     def __show_result(self,word,result_obj):
+        if result_obj['status_code']==2:
+            CurrentState.set_noentry_state()
+        else:
+            CurrentState.clear_state()
+
+        result_obj=result_obj['results']
         CurrentState.reset(word, result_obj)
         self.__show_definition(None)
 
@@ -289,6 +301,7 @@ Keyboard shortcuts:
         ProgressDialog.hide_progress()
 
     def __lookup(self,word):
+        self.line_edit.setText(word)
         ProgressDialog.show_progress(self,f"Looking up {word}...")
         #self.progress.show()
         self.lookupThread.word=word
@@ -305,7 +318,10 @@ Keyboard shortcuts:
         self.__lookup(word)
 
 
-    def __show_search_index_results(self,word,all_words):
+    def __show_search_index_results(self,word,result_dict):
+        if result_dict['status_code']!=0:
+            print(f"search {word} in index error")
+        all_words=result_dict['results']
         self.index_search_items.clear()
         self.index_search_items.insertItems(0, all_words)
         ProgressDialog.hide_progress()

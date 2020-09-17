@@ -7,6 +7,7 @@ from .gui_utils import pretty_dict_result,ProgressDialog,httpPlaySound
 
 class MyWebPage(QWebEnginePage):
     play_sound_error_sig=pyqtSignal(str)
+    search_all=pyqtSignal(str)
 
     def __init__(self,parent=None):
         super().__init__(parent)
@@ -15,7 +16,7 @@ class MyWebPage(QWebEnginePage):
 
     def show_result(self,word,result_obj):
         dict_name = CurrentState.get_cur_dict()
-        raw_html = pretty_dict_result(dict_name, result_obj.get(dict_name, "No entry found"))
+        raw_html = pretty_dict_result(dict_name, result_obj['results'].get(dict_name, "No entry found"))
         # except Exception as e:
         #    print(f"Lookup {item} error = {e}")
         #    return False
@@ -34,6 +35,10 @@ class MyWebPage(QWebEnginePage):
                     return False
                 ProgressDialog.show_progress(self.parent(),"Loading...")
                 item = item.strip("/ ")
+                if CurrentState.is_no_entry_state():
+                    self.search_all.emit(item)
+                    return False
+
                 dict_name=CurrentState.get_cur_dict()
                 self.lookupThread.word=item
                 self.lookupThread.dicts=[dict_name]
