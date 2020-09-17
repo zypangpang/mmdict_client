@@ -41,7 +41,7 @@ class InitDictThread(QThread):
             dicts=SocketClient.list_dicts()
         except:
             print(f"init dicts done...")
-            self.result_ready.emit([])
+            self.result_ready.emit({})
             return
 
         print(f"init dicts done...")
