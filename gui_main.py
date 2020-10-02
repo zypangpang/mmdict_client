@@ -1,19 +1,22 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication
 from gui_client.gui import MainWindow
-import constants,configs
+import constants
 import fire
 from gui_client.current_state import CurrentState
-from gui_client.gui_utils import ProgressDialog
+from gui_client.gui_utils import ProgressDialog,show_info_dialog
 from gui_client.work_thread import InitDictThread
+from gui_client.gui_config import GuiConfigs
 import signal
-
+from constants import configs
 #from signal import signal, SIGINT,  SIGTERM
 #signal(SIGTERM, lambda : exit(0))
 #signal(SIGINT,lambda :exit(0))
 
 app = QApplication([])
 ex = MainWindow()
+
+app.aboutToQuit.connect(ex.closing)
 
 def show_mainwindow(dicts):
     ProgressDialog.hide_progress()
@@ -44,13 +47,13 @@ def run_gui():
 class Main:
     def run(self,dict_host=None,dict_port=None,http_host=None,http_port=None):
         if dict_host:
-            configs.DICT_HOST=dict_host
+            configs.set_value(GuiConfigs.DICT_HOST,dict_host)
         if dict_port:
-            configs.DICT_PORT=int(dict_port)
+            configs.set_value(GuiConfigs.DICT_PORT,dict_port)
         if http_host:
-            configs.HTTP_HOST=http_host
+            configs.set_value(GuiConfigs.HTTP_HOST,http_host)
         if http_port:
-            configs.HTTP_PORT=http_port
+            configs.set_value(GuiConfigs.HTTP_PORT,http_port)
 
         run_gui()
 

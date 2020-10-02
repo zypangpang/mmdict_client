@@ -1,5 +1,4 @@
 import logging
-import configs
 import PyQt5.QtWidgets as Widgets
 from PyQt5.QtCore import QUrl, pyqtSignal, Qt
 from PyQt5.QtGui import QKeySequence
@@ -11,6 +10,7 @@ from .work_thread import LookupThread, IndexSearchThread
 from .current_state import CurrentState
 from .MyWebPage import MyWebPage
 
+from constants import configs
 '''
 class MyUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
     def interceptRequest(self, info: QWebEngineUrlRequestInfo) -> None:
@@ -41,8 +41,9 @@ class MainWindow(Widgets.QWidget):
     def __init__(self):
         super().__init__()
 
-        self.http_prefix=f"{configs.HTTP_SCHEME}://{configs.HTTP_HOST}:{configs.HTTP_PORT}"
-        self.zoom_factor=1
+        host,port=configs.get_http_server()
+        self.http_prefix=f"http://{host}:{port}"
+        self.zoom_factor=configs.get_zoom_factor()
         #self.init_dictionary()
 
         #QWebEngineUrlScheme.registerScheme(QWebEngineUrlScheme(ENTRY_SCHEME))
@@ -135,6 +136,7 @@ class MainWindow(Widgets.QWidget):
         #self.profile.installUrlSchemeHandler(ENTRY_SCHEME,self.handler)
 
         self.page = MyWebPage()
+        self.page.setZoomFactor(self.zoom_factor)
 
         self.view = QtWebEngineWidgets.QWebEngineView()
         self.view.setPage(self.page)
@@ -257,10 +259,12 @@ Keyboard shortcuts:
     def zoomIn(self):
         self.zoom_factor+=.1
         self.page.setZoomFactor(self.zoom_factor)
+        configs.set_zoom_factor(self.zoom_factor)
 
     def zoomOut(self):
         self.zoom_factor-=.1
         self.page.setZoomFactor(self.zoom_factor)
+        configs.set_zoom_factor(self.zoom_factor)
 
     def switch_dict(self,cur_item):
         dict_name=cur_item.text()
@@ -360,6 +364,10 @@ Keyboard shortcuts:
 
     def showMessage(self,msg):
         self.status_bar.showMessage(str(msg),4000)
+
+    def closing(self):
+        print("closing...")
+        configs.save()
 
 
 

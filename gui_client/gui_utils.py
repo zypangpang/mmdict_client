@@ -1,12 +1,14 @@
 from pathlib import Path
+from PyQt5 import QtWidgets
 
 from PyQt5 import QtWebEngineWidgets, QtCore
 from PyQt5.QtCore import QUrl,Qt
 from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtWebEngineWidgets import QWebEngineSettings
 import PyQt5.QtWidgets as Widgets
-import configs
 import requests,subprocess
+
+from constants import configs
 
 class ProgressDialog:
     progress=None
@@ -91,15 +93,19 @@ def get_data_folder_url(data_folder):
     return QUrl.fromLocalFile(data_folder+"/index.html")
 
 def httpPlaySound(sound_path,dict_name):
-    addr=f"{configs.HTTP_SCHEME}://{configs.HTTP_HOST}:{configs.HTTP_PORT}/{dict_name}/{sound_path}"
+    host,port=configs.get_http_server()
+    addr=f"http://{host}:{port}/{dict_name}/{sound_path}"
     print(addr)
 
     r=requests.get(addr)
     with open("/tmp/mmdict_sound.tmp",'wb') as f:
         f.write(r.content)
-    command=[configs.SOUND_PLAYER, "/tmp/mmdict_sound.tmp"]
+    command=[configs.get_sound_player(), "/tmp/mmdict_sound.tmp"]
     # os.system(SOUND_PLAYER+" "+str(Path(data_folder).joinpath(item)))
     subprocess.Popen(command)
     #if res.returncode != 0:
     #    raise Exception(f"{configs.SOUND_PLAYER} play sound error. Check both the program and sound file.")
+
+def show_info_dialog(parent,msg):
+    QtWidgets.QMessageBox.info(parent, "Notice", msg)
 

@@ -1,14 +1,16 @@
 import socket,json,constants
 from bs4 import BeautifulSoup
 from constants import FRONT_END
-import configs
+
+from constants import configs
 
 
 class SocketClient():
     front_end=FRONT_END.QTWEBENGINE
     @classmethod
     def __request(cls,data):
-        if configs.DICT_HOST=='unix':
+        host,_=configs.get_dict_server()
+        if host=='unix':
             return cls.__request_unix(data)
         else:
             return cls.__request_inet(data)
@@ -29,7 +31,7 @@ class SocketClient():
     @classmethod
     def __request_inet(cls,data):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.connect((configs.DICT_HOST,configs.DICT_PORT))
+            sock.connect(configs.get_dict_server())
             sock.sendall(data.encode("utf-8"))
             msg_list = []
             while True:
