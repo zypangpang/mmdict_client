@@ -1,7 +1,7 @@
 import logging
 import PyQt5.QtWidgets as Widgets
 from PyQt5.QtCore import QUrl, pyqtSignal, Qt
-from PyQt5.QtGui import QKeySequence
+from PyQt5.QtGui import QKeySequence, QPalette, QColorConstants
 from PyQt5.QtWebEngineWidgets import  QWebEngineScript
 from PyQt5 import QtWebEngineWidgets
 from .socket_client import SocketClient
@@ -9,6 +9,7 @@ from .gui_utils import set_default_font,pretty_dict_result,ProgressDialog
 from .work_thread import LookupThread, IndexSearchThread
 from .current_state import CurrentState
 from .MyWebPage import MyWebPage
+from .SettingDialog import SettingDialog
 
 from constants import configs
 '''
@@ -45,6 +46,9 @@ class MainWindow(Widgets.QWidget):
         self.http_prefix=f"http://{host}:{port}"
         self.zoom_factor=configs.get_zoom_factor()
         #self.init_dictionary()
+        self.need_write_config=False
+
+        self.init_menubar()
 
         #QWebEngineUrlScheme.registerScheme(QWebEngineUrlScheme(ENTRY_SCHEME))
 
@@ -73,6 +77,19 @@ class MainWindow(Widgets.QWidget):
         self.connect_slot()
         self.setWindowTitle("mmDict")
 
+    def init_menubar(self):
+        self.menubar=Widgets.QMenuBar(self)
+        self.file_menu=Widgets.QMenu("&File",self)
+        self.menubar.addMenu(self.file_menu)
+
+        #plt=self.menubar.palette()
+        #plt.setColor(QPalette.Window,QColorConstants.Red)
+        #self.menubar.setPalette(plt)
+
+        menu_titles=['Open','Settings']
+        self.file_menu.addAction("Settings",self.show_setting_dialog,QKeySequence(Qt.CTRL+Qt.ALT+Qt.Key_S))
+        #self.file_menu.addActions([Widgets.QAction(t,self) for t in menu_titles])
+
     def init_dictionary(self):
         try:
             CurrentState.set_dict_infos(SocketClient.list_dicts())
@@ -80,42 +97,51 @@ class MainWindow(Widgets.QWidget):
             logging.error(e)
 
 
-
     def init_layout(self):
         layout = Widgets.QVBoxLayout()
+        layout.setContentsMargins(0,2,0,2)
+
+        dict_layout=Widgets.QVBoxLayout()
+        dict_layout.setContentsMargins(5,0,5,0)
+
+        layout.addWidget(self.menubar)
+        layout.addLayout(dict_layout)
+        layout.addWidget(self.status_bar)
+
+        self.status_bar.setFixedHeight(20)
+
         first_row_layout = Widgets.QHBoxLayout()
+        second_row_layout = Widgets.QHBoxLayout()
+
+        dict_layout.addLayout(first_row_layout)
+        dict_layout.addLayout(second_row_layout)
+
         first_row_layout.addWidget(self.line_edit)
         first_row_layout.addWidget(self.search_button)
         first_row_layout.addWidget(self.back_btn)
         first_row_layout.addWidget(self.help_btn)
         #first_row_layout.addWidget(self.next_btn)
-        layout.addLayout(first_row_layout)
 
-        second_row_layout = Widgets.QHBoxLayout()
+        second_row_second_col=Widgets.QGridLayout()
+
         second_row_layout.addWidget(self.view)
+        second_row_layout.addLayout(second_row_second_col)
         #self.view.setSizePolicy(Widgets.QSizePolicy.Expanding,Widgets.QSizePolicy.Expanding)
 
         #self.dict_list_widget.setMaximumWidth(400)
         #self.index_search_items.setMaximumWidth(400)
 
-        second_row_second_col=Widgets.QGridLayout()
         second_row_second_col.addWidget(self.dict_list_widget,0,0,1,2)
         second_row_second_col.addWidget(self.index_line_edit,1,0)
         second_row_second_col.addWidget(self.index_search_btn,1,1)
         second_row_second_col.addWidget(self.index_search_items,2,0,1,2)
 
-        second_row_layout.addLayout(second_row_second_col)
 
         second_row_layout.setStretch(0, 3)
         second_row_layout.setStretch(1, 1)
 
-        layout.addLayout(second_row_layout)
-
-        self.status_bar.setFixedHeight(20)
-        layout.addWidget(self.status_bar)
 
         #layout.setSpacing(0)
-        layout.setContentsMargins(3,3,3,3)
 
         self.setLayout(layout)
         self.setMinimumHeight(700)
@@ -368,6 +394,11 @@ Keyboard shortcuts:
     def closing(self):
         print("closing...")
         configs.save()
+
+    # ********** Slots ********************** #
+    def show_setting_dialog(self):
+        SettingDialog(self).exec()
+
 
 
 

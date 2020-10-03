@@ -4,7 +4,14 @@ from pathlib import Path
 CONFIG_SECTION='gui client'
 PROGRAM_SECTION='internal settings DO NOT MODIFY'
 
+def write_back(func):
+    def inner_func(*args,**kwargs):
+        GuiConfigs.need_write_back=True
+        func(*args,**kwargs)
+    return inner_func
+
 class GuiConfigs():
+    need_write_back=False
     DICT_HOST = "dict host"
     # DICT_HOST="localhost"
 
@@ -47,6 +54,11 @@ class GuiConfigs():
         self.ori_config=copy.deepcopy(self.config)
 
     def save(self):
+        #if self.config is self.ori_config:
+        #    return
+        if not GuiConfigs.need_write_back:
+            return
+        print("config write back")
         with open(self.config_path, "w") as f:
             self.ori_config.write(f)
 
@@ -70,6 +82,7 @@ class GuiConfigs():
     def set_value(self,key,value):
         self.config[CONFIG_SECTION][key]=value
 
+    @write_back
     def set_zoom_factor(self,val):
         try:
             self.config[PROGRAM_SECTION][self.ZOOM_FACTOR]=val

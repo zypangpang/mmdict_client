@@ -1,7 +1,8 @@
 ## Introduction
 This project includes two simple clients for [mmDict](https://github.com/zypangpang/mmdict_daemon).
 
-You need to configure your own mmDict daemon server in `configs-example.py`, and then rename this file to `configs.py` to take effect.
+A config file will be created at the first running. The default config file path is `$HOME/.mmdict_client/configs.ini`. 
+Then you need to change it accordingly.
 
 ## Installation
 Just git clone this repo. No need more steps.
@@ -26,4 +27,4 @@ Just git clone this repo. No need more steps.
    **Recommend** using `pip3 install --user <package>` to install above packages seperately.
 
 ## Usage
-Simply run `python3 gui_client.py run` to start the gui client, with `-h` to print the help.
+Simply run `python3 gui_main.py run` to start the gui client, with `-h` to print the help.
