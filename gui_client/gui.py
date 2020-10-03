@@ -11,7 +11,7 @@ from .current_state import CurrentState
 from .MyWebPage import MyWebPage
 from .SettingDialog import SettingDialog
 
-from constants import configs
+from constants import configs,color_map
 '''
 class MyUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
     def interceptRequest(self, info: QWebEngineUrlRequestInfo) -> None:
@@ -76,6 +76,8 @@ class MainWindow(Widgets.QWidget):
 
         self.connect_slot()
         self.setWindowTitle("mmDict")
+
+        self.load_settings()
 
     def init_menubar(self):
         self.menubar=Widgets.QMenuBar(self)
@@ -146,6 +148,9 @@ class MainWindow(Widgets.QWidget):
         self.setLayout(layout)
         self.setMinimumHeight(700)
         self.setMinimumWidth(700)
+
+    def load_settings(self):
+        self.page.setBackgroundColor(color_map[configs.get_bg_color()])
 
     def init_webview(self):
         set_default_font("Noto Sans CJK SC",16)
@@ -397,7 +402,10 @@ Keyboard shortcuts:
 
     # ********** Slots ********************** #
     def show_setting_dialog(self):
-        SettingDialog(self).exec()
+        dialog=SettingDialog(self)
+        dialog.accepted.connect(self.load_settings)
+        dialog.exec()
+
 
 
 

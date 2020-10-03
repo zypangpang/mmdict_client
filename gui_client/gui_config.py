@@ -24,6 +24,7 @@ class GuiConfigs():
     SOUND_PLAYER = 'sound player'
 
     ZOOM_FACTOR='zoom factor'
+    BG_COLOR='background color'
 
     @classmethod
     def check_config_file(cls,file_path):
@@ -82,21 +83,24 @@ class GuiConfigs():
     def set_value(self,key,value):
         self.config[CONFIG_SECTION][key]=value
 
-    @write_back
-    def set_zoom_factor(self,val):
+    def __set_value_both(self,key,val):
         try:
-            self.config[PROGRAM_SECTION][self.ZOOM_FACTOR]=val
+            self.config[PROGRAM_SECTION][key]=val
         except:
             self.config[PROGRAM_SECTION]={
-                self.ZOOM_FACTOR:val
+                key:val
             }
 
         try:
-            self.ori_config[PROGRAM_SECTION][self.ZOOM_FACTOR]=val
+            self.ori_config[PROGRAM_SECTION][key]=val
         except:
             self.ori_config[PROGRAM_SECTION]={
-                self.ZOOM_FACTOR:val
+                key:val
             }
+
+    @write_back
+    def set_zoom_factor(self,val):
+        self.__set_value_both(self.ZOOM_FACTOR,val)
 
 
     def get_zoom_factor(self):
@@ -104,6 +108,16 @@ class GuiConfigs():
             return float(self.config[PROGRAM_SECTION][self.ZOOM_FACTOR])
         except:
             return 1.0
+
+    def get_bg_color(self):
+        try:
+            return self.config[PROGRAM_SECTION][self.BG_COLOR]
+        except:
+            return 'white'
+
+    @write_back
+    def set_bg_color(self,color):
+        self.__set_value_both(self.BG_COLOR,color)
 
 
 #def set_dicts(self,dicts:dict):

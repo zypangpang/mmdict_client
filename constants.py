@@ -1,6 +1,9 @@
 from enum import Enum
 import platform,os
 from pathlib import Path
+
+from PyQt5.QtGui import QColorConstants
+
 from gui_client.gui_config import GuiConfigs
 OS_NAME=platform.system()
 
@@ -21,5 +24,9 @@ if not GuiConfigs.check_config_file(DEFAULT_CONFIG_PATH):
 
 configs = GuiConfigs(DEFAULT_CONFIG_PATH)
 
-
-
+color_map = {
+    'white': QColorConstants.White,
+    'black': QColorConstants.Black,
+    'yellow': QColorConstants.Cyan,
+    'green': QColorConstants.Green
+}
