@@ -1,8 +1,8 @@
 import configparser,os,copy
 from pathlib import Path
 
-CONFIG_SECTION='gui client'
-PROGRAM_SECTION='internal settings DO NOT MODIFY'
+CONFIG_SECTION='server'
+PROGRAM_SECTION='client'
 
 def write_back(func):
     def inner_func(*args,**kwargs):
