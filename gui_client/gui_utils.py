@@ -109,3 +109,19 @@ def httpPlaySound(sound_path,dict_name):
 def show_info_dialog(parent,msg):
     QtWidgets.QMessageBox.info(parent, "Notice", msg)
 
+def get_widget_value(widget):
+    if isinstance(widget,Widgets.QComboBox):
+        return widget.currentText()
+    elif isinstance(widget,Widgets.QLineEdit):
+        return widget.text()
+    elif isinstance(widget,Widgets.QSpinBox):
+        return widget.value()
+
+def set_widget_value(widget,val):
+    if isinstance(widget, Widgets.QComboBox):
+        widget.setCurrentText(val)
+    elif isinstance(widget, Widgets.QLineEdit):
+        widget.setText(val)
+    elif isinstance(widget, Widgets.QSpinBox):
+        widget.setValue(val)
+

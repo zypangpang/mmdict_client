@@ -1,6 +1,8 @@
 from PyQt5 import QtWidgets
 from .ui.ui_setting_dialog import Ui_SettingDialog
 from constants import configs
+from .gui_config import GuiConfigs
+from .gui_utils import get_widget_value,set_widget_value
 
 class SettingDialog(QtWidgets.QDialog):
 
@@ -10,17 +12,42 @@ class SettingDialog(QtWidgets.QDialog):
         self.ui= Ui_SettingDialog()
         self.ui.setupUi(self)
 
-        self.ui.bg_box.setCurrentText(configs.get_bg_color())
-        self.ui.bg_box.currentTextChanged.connect(self.set_bg_color)
+        self.server_widgets = {}
+        self.client_widgets = {}
 
-        self.staged_settings={}
+        self.__organize_widgets()
+
+        self.__load_settings()
+
 
     def set_bg_color(self,color):
         self.staged_settings['set_bg_color']=color
 
+    def __organize_widgets(self):
+        self.client_widgets[configs.BG_COLOR]=self.ui.bg_box
+
+
+    def __load_settings(self):
+        for key,widget in self.client_widgets.items():
+            set_widget_value(widget,configs.get_client_value(key))
+
+    def __export_settings(self):
+        client_settings={}
+        server_settings={}
+        for key, widget in self.server_widgets.items():
+            server_settings[key]=get_widget_value(widget)
+
+        for name,widget in self.client_widgets.items():
+            client_settings[name]=get_widget_value(widget)
+
+        return server_settings,client_settings
+
     def accept(self) -> None:
-        for func,val in self.staged_settings.items():
-            getattr(configs,func)(val)
+        server_s,client_s=self.__export_settings()
+        GuiConfigs.need_write_back=True
+        configs.set_client_config(client_s)
+        #for func,val in self.staged_settings.items():
+        #    getattr(configs,func)(val)
         super().accept()
 
 

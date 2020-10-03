@@ -3,14 +3,14 @@
  <class>SettingDialog</class>
  <widget class="QDialog" name="SettingDialog">
   <property name="windowModality">
-   <enum>Qt::NonModal</enum>
+   <enum>Qt::WindowModal</enum>
   </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>298</height>
+    <width>431</width>
+    <height>409</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,8 +22,8 @@
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>260</y>
+     <x>30</x>
+     <y>370</y>
      <width>391</width>
      <height>31</height>
     </rect>
@@ -39,52 +39,160 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>10</y>
-     <width>381</width>
-     <height>84</height>
+     <y>21</y>
+     <width>411</width>
+     <height>321</height>
     </rect>
    </property>
-   <layout class="QGridLayout" name="gridLayout">
-    <item row="1" column="0" colspan="2">
-     <widget class="QLabel" name="label_2">
-      <property name="text">
-       <string>Language</string>
-      </property>
-     </widget>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QLabel" name="label_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Server settings</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Line" name="line_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
-    <item row="1" column="2">
-     <widget class="QComboBox" name="comboBox_2"/>
+    <item>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QLabel" name="bg_label_2">
+        <property name="text">
+         <string>dict host</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="dict_host_edit"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="bg_label_3">
+        <property name="text">
+         <string>dict port</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="dict_port_box"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="bg_label_4">
+        <property name="text">
+         <string>http host</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="http_host_edit"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="bg_label_5">
+        <property name="text">
+         <string>http port</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QSpinBox" name="http_port_box"/>
+      </item>
+     </layout>
     </item>
-    <item row="0" column="2">
-     <widget class="QComboBox" name="bg_box">
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <property name="text">
-        <string>white</string>
-       </property>
+       <widget class="QLabel" name="label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Client settings</string>
+        </property>
+       </widget>
       </item>
       <item>
-       <property name="text">
-        <string>black</string>
-       </property>
+       <widget class="Line" name="line">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
       </item>
-      <item>
-       <property name="text">
-        <string>yellow</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>green</string>
-       </property>
-      </item>
-     </widget>
+     </layout>
     </item>
-    <item row="0" column="0" colspan="2">
-     <widget class="QLabel" name="bg_label">
-      <property name="text">
-       <string>Background Color</string>
-      </property>
-     </widget>
+    <item>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="bg_label">
+        <property name="text">
+         <string>Background Color</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="bg_box">
+        <item>
+         <property name="text">
+          <string>white</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>black</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>yellow</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>green</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="bg_label_6">
+        <property name="text">
+         <string>Sound player</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="sound_player_edit"/>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
