@@ -24,7 +24,7 @@ class GuiConfigs():
     ZOOM_FACTOR='zoom factor'
     BG_COLOR='background color'
 
-    WELCOME_WORD='Welcome to mmDict'
+    WELCOME_WORD='welcome word'
 
     @classmethod
     def check_config_file(cls,file_path):
@@ -44,6 +44,7 @@ class GuiConfigs():
             cls.SOUND_PLAYER: "mpv",
             cls.BG_COLOR: 'white',
             cls.ZOOM_FACTOR: 1.0,
+            cls.WELCOME_WORD: 'Welcome to mmDict'
         }
         with open(file_path, "w") as f:
             configs.write(f)

@@ -33,6 +33,7 @@ class SettingDialog(QtWidgets.QDialog):
         self.client_widgets[configs.BG_COLOR]=self.ui.bg_box
         self.client_widgets[configs.SOUND_PLAYER]=self.ui.sound_player_edit
         self.client_widgets[configs.ZOOM_FACTOR]=self.ui.zoom_factor_box
+        self.client_widgets[configs.WELCOME_WORD]=self.ui.welcome_edit
 
 
     def __load_settings(self):

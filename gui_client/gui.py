@@ -41,39 +41,48 @@ class MainWindow(Widgets.QWidget):
 
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("mmDict")
 
         self.init_menubar()
+        self.init_widgets()
 
         #QWebEngineUrlScheme.registerScheme(QWebEngineUrlScheme(ENTRY_SCHEME))
 
-        self.line_edit=Widgets.QLineEdit()
-        self.line_edit.setPlaceholderText("Type word to lookup. [Ctrl+L]")
-        self.search_button=Widgets.QPushButton('&Lookup')
-        self.status_bar=Widgets.QStatusBar()
-        self.back_btn=Widgets.QPushButton('&Back')
-        #self.help_btn=Widgets.QPushButton('&Help')
-        #self.next_btn=Widgets.QPushButton("Next")
-        self.dict_list_widget= Widgets.QListWidget()
-        self.index_line_edit=Widgets.QLineEdit()
-        self.index_line_edit.setPlaceholderText("index search")
-        self.index_search_btn=Widgets.QPushButton("&Search")
-        self.index_search_items=Widgets.QListWidget()
-
-
+        # Communication thread
         self.lookupThread = LookupThread()
         self.indexSearchThread = IndexSearchThread()
 
-        self.init_webview()
+        # QWebEngine view and page
+        self.view = QtWebEngineWidgets.QWebEngineView()
+        self.page = MyWebPage()
 
-        self.init_layout()
-
-        self.connect_slot()
-        self.setWindowTitle("mmDict")
-
+        # load settings from config file
         self.load_settings()
 
+        # layout widgets
+        self.init_layout()
+
+        # webview init
+        self.init_webview()
+
+        # connect slots
+        self.connect_slot()
+
+        # Show setting dialog for the first running
         if SHOW_SETTING_DIALOG:
             self.show_setting_dialog()
+
+    def init_widgets(self):
+        self.line_edit = Widgets.QLineEdit()
+        self.line_edit.setPlaceholderText("Type word to lookup. [Ctrl+L]")
+        self.search_button = Widgets.QPushButton('&Lookup')
+        self.status_bar = Widgets.QStatusBar()
+        self.back_btn = Widgets.QPushButton('&Back')
+        self.dict_list_widget = Widgets.QListWidget()
+        self.index_line_edit = Widgets.QLineEdit()
+        self.index_line_edit.setPlaceholderText("index search")
+        self.index_search_btn = Widgets.QPushButton("&Search")
+        self.index_search_items = Widgets.QListWidget()
 
     def init_menubar(self):
         self.menubar=Widgets.QMenuBar(self)
@@ -97,7 +106,6 @@ class MainWindow(Widgets.QWidget):
             CurrentState.set_dict_infos(SocketClient.list_dicts())
         except Exception as e:
             logging.error(e)
-
 
     def init_layout(self):
         layout = Widgets.QVBoxLayout()
@@ -153,6 +161,9 @@ class MainWindow(Widgets.QWidget):
         host, port = configs.get_http_server()
         self.http_prefix = f"http://{host}:{port}"
         self.zoom_factor = configs.get_zoom_factor()
+        self.welcome_word=configs.get_client_value(configs.WELCOME_WORD)
+
+        self.page.setZoomFactor(self.zoom_factor)
         self.page.setBackgroundColor(color_map[configs.get_bg_color()])
 
     def init_webview(self):
@@ -169,9 +180,6 @@ class MainWindow(Widgets.QWidget):
         #self.handler=EntrySchemeHandler()
         #self.profile.installUrlSchemeHandler(ENTRY_SCHEME,self.handler)
 
-        self.page = MyWebPage()
-
-        self.view = QtWebEngineWidgets.QWebEngineView()
         self.view.setPage(self.page)
         style="""
         @keyframes example {
@@ -204,7 +212,7 @@ bottom:10px;
         """
 
         #self.page.setHtml(f'<style>{style}</style><h1>:-)<br>Welcome to mmDict</h1><p class="center ">Copyright &copy ZaiyuPang 2020</p>')
-        self.page.setHtml(f'<style>{style}</style><h1>:-)<br>Welcome to mmDict</h1>')
+        self.page.setHtml(f'<style>{style}</style><h1>:-)<br>{self.welcome_word}</h1>')
 
         #self.interceptor=MyUrlRequestInterceptor()
         #self.profile.setUrlRequestInterceptor(self.interceptor)
@@ -233,12 +241,20 @@ bottom:10px;
         Widgets.QShortcut(QKeySequence(Qt.Key_G),self.view).activated.connect(
             lambda : self.view.page().runJavaScript("window.scrollTo(0,0);")
         )
+
         self.index_line_edit.returnPressed.connect(self.index_search_btn.click)
         self.line_edit.returnPressed.connect(self.search_button.click)
+
         Widgets.QShortcut(QKeySequence(Qt.CTRL+Qt.Key_L),self).activated.connect(
             lambda :self.line_edit.setFocus() or self.line_edit.selectAll())
         Widgets.QShortcut(QKeySequence.ZoomIn,self.view).activated.connect(self.zoomIn)
         Widgets.QShortcut(QKeySequence.ZoomOut,self.view).activated.connect(self.zoomOut)
+
+    # Application related slots ******************************#
+    def show_setting_dialog(self):
+        dialog=SettingDialog(self)
+        dialog.accepted.connect(self.load_settings)
+        dialog.exec()
 
     def show_shortcuts(self):
         msgBox=Widgets.QMessageBox()
@@ -252,7 +268,9 @@ bottom:10px;
         msgBox.setWindowTitle("Help")
         msgBox.setText(HELP_TEXT)
         msgBox.exec()
+    # Application related slots ******************************#
 
+    # History related functions ******************************#
     def __show_history_result(self,word,result_obj):
         name = CurrentState.get_cur_dict()
         html = pretty_dict_result(name, result_obj['results'].get(name, "No entry found"))
@@ -275,14 +293,15 @@ bottom:10px;
         prev=CurrentState.get_prev_entry()
         if prev:
             self.__show_history(prev)
+    # History related functions ******************************#
 
+    # Webpage related operations *****************************#
     def scrollDown(self):
         #cur_pos=self.view.page().scrollPosition()
         self.view.page().runJavaScript(f"window.scrollBy(0,50);", QWebEngineScript.ApplicationWorld)
 
     def scrollUp(self):
         self.view.page().runJavaScript(f"window.scrollBy(0,-50);", QWebEngineScript.ApplicationWorld)
-
 
 
     def zoomIn(self):
@@ -296,6 +315,14 @@ bottom:10px;
         #configs.set_zoom_factor(self.zoom_factor)
         self.showMessage("zoom factor "+'{:.1f}'.format(self.zoom_factor))
 
+    def search_selected(self):
+        text=self.page.selectedText().strip()
+        if text:
+            self.line_edit.setText(text)
+
+    # Webpage related operations *****************************#
+
+    # Word search related functions **************************#
     def switch_dict(self,cur_item):
         dict_name=cur_item.text()
         self.__show_definition(dict_name)
@@ -311,12 +338,6 @@ bottom:10px;
         self.page.setHtml(pretty_dict_result(name, value), QUrl(f"{self.http_prefix}/{name}/"))
         CurrentState.add_history(CurrentState.word)
         self.view.page().runJavaScript("window.scrollTo(0,0);")
-
-    def search_selected(self):
-        text=self.page.selectedText().strip()
-        if text:
-            self.line_edit.setText(text)
-            #self.__lookup(text)
 
     def __show_result(self,word,result_obj,status_code):
         ProgressDialog.hide_progress()
@@ -337,7 +358,6 @@ bottom:10px;
         self.dict_list_widget.clear()
         self.dict_list_widget.insertItems(0, avl_dicts)
 
-
     def __lookup(self,word):
         self.line_edit.setText(word)
         ProgressDialog.show_progress(self,f"Looking up {word}...")
@@ -354,7 +374,6 @@ bottom:10px;
         if not word:
             return
         self.__lookup(word)
-
 
     def __show_search_index_results(self,word,result_dict,status_code):
         ProgressDialog.hide_progress()
@@ -374,6 +393,8 @@ bottom:10px;
             return
         dict_name = CurrentState.get_cur_dict()
         if not dict_name:
+            Widgets.QMessageBox.information(self, "Notice", "No dictionary set. Please first search a word "
+                                                            "and then choose a dictionary in dictionary list.")
             self.index_search_items.clear()
             return
         ProgressDialog.show_progress(self,f"Searching {input}...")
@@ -399,19 +420,17 @@ bottom:10px;
         #self.index_search_items.clear()
         #self.index_search_items.insertItems(0,all_words)
 
+    # Word search related functions **************************#
 
+    # Auxiliary functions ************************************#
     def showMessage(self,msg):
         self.status_bar.showMessage(str(msg),4000)
 
     def closing(self):
         print("closing...")
         configs.save()
+    # Auxiliary functions ************************************#
 
-    # ********** Slots ********************** #
-    def show_setting_dialog(self):
-        dialog=SettingDialog(self)
-        dialog.accepted.connect(self.load_settings)
-        dialog.exec()
 
 
 
