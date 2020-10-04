@@ -39,11 +39,11 @@ class GuiConfigs():
             cls.DICT_PORT: 9999,
             cls.HTTP_HOST: "localhost",
             cls.HTTP_PORT: 8000,
-            cls.SOUND_PLAYER:"mpv",
         }
         configs[CLIENT_SECTION] = {
-            cls.ZOOM_FACTOR : 1.0,
+            cls.SOUND_PLAYER: "mpv",
             cls.BG_COLOR: 'white',
+            cls.ZOOM_FACTOR: 1.0,
         }
         with open(file_path, "w") as f:
             configs.write(f)
@@ -90,10 +90,10 @@ class GuiConfigs():
             self.set_client_value(key, val)
 
     def set_server_value(self,key,value):
-        self.config[SERVER_SECTION][key]=value
+        self.config[SERVER_SECTION][key]=str(value)
 
     def set_client_value(self,key,value):
-        self.config[CLIENT_SECTION][key]=value
+        self.config[CLIENT_SECTION][key]=str(value)
 
     def get_server_value(self,key):
         return self.config[SERVER_SECTION][key]

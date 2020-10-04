@@ -116,6 +116,8 @@ def get_widget_value(widget):
         return widget.text()
     elif isinstance(widget,Widgets.QSpinBox):
         return widget.value()
+    elif isinstance(widget,Widgets.QDoubleSpinBox):
+        return widget.value()
 
 def set_widget_value(widget,val):
     if isinstance(widget, Widgets.QComboBox):
@@ -123,5 +125,7 @@ def set_widget_value(widget,val):
     elif isinstance(widget, Widgets.QLineEdit):
         widget.setText(val)
     elif isinstance(widget, Widgets.QSpinBox):
-        widget.setValue(val)
+        widget.setValue(int(val))
+    elif isinstance(widget, Widgets.QDoubleSpinBox):
+        widget.setValue(float(val))
 

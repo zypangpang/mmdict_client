@@ -6,7 +6,7 @@ class STATUS(Enum):
 
 class CurrentState():
     word=None
-    dict_names=[]
+    #dict_names=[]
     cur_dict_name=None
     history=[]
     result_obj={}
@@ -24,10 +24,10 @@ class CurrentState():
     def is_no_entry_state(cls):
         return cls.result_state==STATUS.NO_ENTRY
 
-    @classmethod
-    def set_dict_infos(cls,dicts):
-        cls.dict_names=dicts
-        cls.cur_dict_name=cls.dict_names[0]
+    #@classmethod
+    #def set_dict_infos(cls,dicts):
+    #    cls.dict_names=dicts
+    #    cls.cur_dict_name=cls.dict_names[0]
 
     @classmethod
     def reset(cls,word,result_obj):

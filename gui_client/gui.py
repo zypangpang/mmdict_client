@@ -11,7 +11,7 @@ from .current_state import CurrentState
 from .MyWebPage import MyWebPage
 from .SettingDialog import SettingDialog
 
-from constants import configs,color_map
+from constants import configs,color_map,SHORTCUTS_DESC,HELP_TEXT,SHOW_SETTING_DIALOG
 '''
 class MyUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
     def interceptRequest(self, info: QWebEngineUrlRequestInfo) -> None:
@@ -42,12 +42,6 @@ class MainWindow(Widgets.QWidget):
     def __init__(self):
         super().__init__()
 
-        host,port=configs.get_http_server()
-        self.http_prefix=f"http://{host}:{port}"
-        self.zoom_factor=configs.get_zoom_factor()
-        #self.init_dictionary()
-        self.need_write_config=False
-
         self.init_menubar()
 
         #QWebEngineUrlScheme.registerScheme(QWebEngineUrlScheme(ENTRY_SCHEME))
@@ -57,7 +51,7 @@ class MainWindow(Widgets.QWidget):
         self.search_button=Widgets.QPushButton('&Lookup')
         self.status_bar=Widgets.QStatusBar()
         self.back_btn=Widgets.QPushButton('&Back')
-        self.help_btn=Widgets.QPushButton('&Help')
+        #self.help_btn=Widgets.QPushButton('&Help')
         #self.next_btn=Widgets.QPushButton("Next")
         self.dict_list_widget= Widgets.QListWidget()
         self.index_line_edit=Widgets.QLineEdit()
@@ -71,7 +65,6 @@ class MainWindow(Widgets.QWidget):
 
         self.init_webview()
 
-
         self.init_layout()
 
         self.connect_slot()
@@ -79,10 +72,15 @@ class MainWindow(Widgets.QWidget):
 
         self.load_settings()
 
+        if SHOW_SETTING_DIALOG:
+            self.show_setting_dialog()
+
     def init_menubar(self):
         self.menubar=Widgets.QMenuBar(self)
         self.file_menu=Widgets.QMenu("&File",self)
+        self.help_menu=Widgets.QMenu("&Help",self)
         self.menubar.addMenu(self.file_menu)
+        self.menubar.addMenu(self.help_menu)
 
         #plt=self.menubar.palette()
         #plt.setColor(QPalette.Window,QColorConstants.Red)
@@ -90,6 +88,8 @@ class MainWindow(Widgets.QWidget):
 
         menu_titles=['Open','Settings']
         self.file_menu.addAction("Settings",self.show_setting_dialog,QKeySequence(Qt.CTRL+Qt.ALT+Qt.Key_S))
+        self.help_menu.addAction("Shortcuts",self.show_shortcuts, QKeySequence(Qt.CTRL+Qt.ALT+Qt.Key_K))
+        self.help_menu.addAction("About",self.show_help)
         #self.file_menu.addActions([Widgets.QAction(t,self) for t in menu_titles])
 
     def init_dictionary(self):
@@ -121,7 +121,7 @@ class MainWindow(Widgets.QWidget):
         first_row_layout.addWidget(self.line_edit)
         first_row_layout.addWidget(self.search_button)
         first_row_layout.addWidget(self.back_btn)
-        first_row_layout.addWidget(self.help_btn)
+        #first_row_layout.addWidget(self.help_btn)
         #first_row_layout.addWidget(self.next_btn)
 
         second_row_second_col=Widgets.QGridLayout()
@@ -150,6 +150,9 @@ class MainWindow(Widgets.QWidget):
         self.setMinimumWidth(700)
 
     def load_settings(self):
+        host, port = configs.get_http_server()
+        self.http_prefix = f"http://{host}:{port}"
+        self.zoom_factor = configs.get_zoom_factor()
         self.page.setBackgroundColor(color_map[configs.get_bg_color()])
 
     def init_webview(self):
@@ -167,7 +170,6 @@ class MainWindow(Widgets.QWidget):
         #self.profile.installUrlSchemeHandler(ENTRY_SCHEME,self.handler)
 
         self.page = MyWebPage()
-        self.page.setZoomFactor(self.zoom_factor)
 
         self.view = QtWebEngineWidgets.QWebEngineView()
         self.view.setPage(self.page)
@@ -218,7 +220,7 @@ bottom:10px;
 
         self.search_button.clicked.connect(self.lookup)
         self.back_btn.clicked.connect(self.history_back)
-        self.help_btn.clicked.connect(self.show_help)
+        #self.help_btn.clicked.connect(self.show_help)
         self.index_search_btn.clicked.connect(self.search_index)
 
         self.dict_list_widget.itemClicked.connect(self.switch_dict)
@@ -238,21 +240,17 @@ bottom:10px;
         Widgets.QShortcut(QKeySequence.ZoomIn,self.view).activated.connect(self.zoomIn)
         Widgets.QShortcut(QKeySequence.ZoomOut,self.view).activated.connect(self.zoomOut)
 
-    def show_help(self):
+    def show_shortcuts(self):
         msgBox=Widgets.QMessageBox()
-        msgBox.setWindowTitle("Help")
-        msgBox.setText('''
-[ mmDict: yet another mdict client ]
-Author: pangzaiyu@163.com
+        msgBox.setWindowTitle("Shortcuts")
+        msgBox.setText(SHORTCUTS_DESC)
+        msgBox.exec()
 
-Keyboard shortcuts:
-    Enter: Lookup/Search
-    Alt+L/S/H/B: Lookup, Search, Help, Back
-    Ctrl+L: focus input line edit
-    j/k: Scroll down/up
-    g: Back to top
-    Ctrl+Plus/Minus: Zoom out/in
-''')
+    def show_help(self):
+        msgBox = Widgets.QMessageBox()
+        msgBox.setStyleSheet("QLabel{min-width: 600px;}");
+        msgBox.setWindowTitle("Help")
+        msgBox.setText(HELP_TEXT)
         msgBox.exec()
 
     def __show_history_result(self,word,result_obj):
@@ -290,12 +288,13 @@ Keyboard shortcuts:
     def zoomIn(self):
         self.zoom_factor+=.1
         self.page.setZoomFactor(self.zoom_factor)
-        configs.set_zoom_factor(self.zoom_factor)
+        self.showMessage("zoom factor "+'{:.1f}'.format(self.zoom_factor))
 
     def zoomOut(self):
         self.zoom_factor-=.1
         self.page.setZoomFactor(self.zoom_factor)
-        configs.set_zoom_factor(self.zoom_factor)
+        #configs.set_zoom_factor(self.zoom_factor)
+        self.showMessage("zoom factor "+'{:.1f}'.format(self.zoom_factor))
 
     def switch_dict(self,cur_item):
         dict_name=cur_item.text()
@@ -319,7 +318,12 @@ Keyboard shortcuts:
             self.line_edit.setText(text)
             #self.__lookup(text)
 
-    def __show_result(self,word,result_obj):
+    def __show_result(self,word,result_obj,status_code):
+        ProgressDialog.hide_progress()
+        if status_code!=0:
+            Widgets.QMessageBox.information(self, "Notice", "Lookup failed. Check network connection and server configuration.")
+            return
+
         if result_obj['status_code']==2:
             CurrentState.set_noentry_state()
         else:
@@ -333,7 +337,6 @@ Keyboard shortcuts:
         self.dict_list_widget.clear()
         self.dict_list_widget.insertItems(0, avl_dicts)
 
-        ProgressDialog.hide_progress()
 
     def __lookup(self,word):
         self.line_edit.setText(word)
@@ -353,13 +356,17 @@ Keyboard shortcuts:
         self.__lookup(word)
 
 
-    def __show_search_index_results(self,word,result_dict):
+    def __show_search_index_results(self,word,result_dict,status_code):
+        ProgressDialog.hide_progress()
+        if status_code!=0:
+            Widgets.QMessageBox.information(self, "Notice", "Lookup failed. Check network connection and server configuration.")
+            return
+
         if result_dict['status_code']!=0:
             print(f"search {word} in index error")
         all_words=result_dict['results']
         self.index_search_items.clear()
         self.index_search_items.insertItems(0, all_words)
-        ProgressDialog.hide_progress()
 
     def search_index(self):
         input=self.index_line_edit.text().strip()

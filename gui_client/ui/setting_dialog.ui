@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>431</width>
-    <height>409</height>
+    <width>430</width>
+    <height>403</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,9 +22,9 @@
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>370</y>
-     <width>391</width>
+     <x>10</x>
+     <y>360</y>
+     <width>411</width>
      <height>31</height>
     </rect>
    </property>
@@ -39,9 +39,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>21</y>
+     <y>10</y>
      <width>411</width>
-     <height>321</height>
+     <height>333</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -67,6 +67,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="lineWidth">
+         <number>2</number>
         </property>
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -95,7 +98,14 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QSpinBox" name="dict_port_box"/>
+       <widget class="QSpinBox" name="dict_port_box">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>65535</number>
+        </property>
+       </widget>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="bg_label_4">
@@ -115,7 +125,14 @@
        </widget>
       </item>
       <item row="3" column="1">
-       <widget class="QSpinBox" name="http_port_box"/>
+       <widget class="QSpinBox" name="http_port_box">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>65535</number>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
@@ -142,6 +159,12 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="frameShadow">
+         <enum>QFrame::Sunken</enum>
+        </property>
+        <property name="lineWidth">
+         <number>2</number>
+        </property>
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
@@ -151,13 +174,6 @@
     </item>
     <item>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="bg_label">
-        <property name="text">
-         <string>Background Color</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="1">
        <widget class="QComboBox" name="bg_box">
         <item>
@@ -191,6 +207,36 @@
       </item>
       <item row="1" column="1">
        <widget class="QLineEdit" name="sound_player_edit"/>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="bg_label">
+        <property name="text">
+         <string>Background Color</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="bg_label_7">
+        <property name="text">
+         <string>Zoom</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="zoom_factor_box">
+        <property name="decimals">
+         <number>1</number>
+        </property>
+        <property name="minimum">
+         <double>0.100000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>2.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
