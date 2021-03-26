@@ -18,6 +18,7 @@ class GuiConfigs():
     #HTTP_SCHEME = "dict scheme"
     HTTP_HOST = "http host"
     HTTP_PORT = "http port"
+    PROTOCOL = "protocol"
 
     SOUND_PLAYER = 'sound player'
 
@@ -37,6 +38,7 @@ class GuiConfigs():
         configs[SERVER_SECTION] = {
             cls.DICT_HOST: 'localhost',
             cls.DICT_PORT: 9999,
+            cls.PROTOCOL: "http",
             cls.HTTP_HOST: "localhost",
             cls.HTTP_PORT: 8000,
         }
@@ -73,9 +75,9 @@ class GuiConfigs():
             raise Exception("Dict host or port is not set.")
 
     def get_http_server(self):
-        host,port= self.config[SERVER_SECTION].get(self.HTTP_HOST), self.config[SERVER_SECTION].get(self.HTTP_PORT)
-        if host and port:
-            return host,int(port)
+        protocol,host,port=self.config[SERVER_SECTION].get(self.PROTOCOL),self.config[SERVER_SECTION].get(self.HTTP_HOST), self.config[SERVER_SECTION].get(self.HTTP_PORT)
+        if protocol and host and port:
+            return protocol, host,int(port)
         else:
             raise Exception("Http host or port is not set.")
 

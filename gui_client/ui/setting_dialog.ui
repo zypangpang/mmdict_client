@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>430</width>
-    <height>480</height>
+    <width>429</width>
+    <height>525</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,29 +19,13 @@
   <property name="modal">
    <bool>true</bool>
   </property>
-  <widget class="QDialogButtonBox" name="buttonBox">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>430</y>
-     <width>411</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-   </property>
-  </widget>
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>10</y>
+     <y>11</y>
      <width>411</width>
-     <height>401</height>
+     <height>501</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -96,8 +80,35 @@
     </item>
     <item>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="2" column="1">
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="dict_host_edit"/>
+      </item>
+      <item row="3" column="1">
        <widget class="QLineEdit" name="http_host_edit"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="bg_label_4">
+        <property name="text">
+         <string>http host</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="bg_label_3">
+        <property name="text">
+         <string>dict port</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QSpinBox" name="http_port_box">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>65535</number>
+        </property>
+       </widget>
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="bg_label_2">
@@ -116,39 +127,22 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="bg_label_4">
-        <property name="text">
-         <string>http host</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLineEdit" name="dict_host_edit"/>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="bg_label_3">
-        <property name="text">
-         <string>dict port</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
+      <item row="4" column="0">
        <widget class="QLabel" name="bg_label_5">
         <property name="text">
          <string>http port</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
-       <widget class="QSpinBox" name="http_port_box">
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>65535</number>
+      <item row="2" column="0">
+       <widget class="QLabel" name="protocal_label">
+        <property name="text">
+         <string>protocol</string>
         </property>
        </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="protocol_edit"/>
       </item>
      </layout>
     </item>
@@ -287,6 +281,16 @@
        <widget class="QLineEdit" name="welcome_edit"/>
       </item>
      </layout>
+    </item>
+    <item>
+     <widget class="QDialogButtonBox" name="buttonBox">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="standardButtons">
+       <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>

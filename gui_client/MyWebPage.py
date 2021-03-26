@@ -2,7 +2,7 @@ from PyQt5.QtCore import pyqtSignal, QUrl
 from PyQt5.QtWebEngineWidgets import QWebEnginePage
 from .work_thread import LookupThread
 from .current_state import CurrentState
-from .gui_utils import pretty_dict_result,ProgressDialog,httpPlaySound
+from .gui_utils import pretty_dict_result,ProgressDialog,playSound
 
 
 class MyWebPage(QWebEnginePage):
@@ -58,7 +58,7 @@ class MyWebPage(QWebEnginePage):
                 item=url.toString().split("://")[1]
                 name=CurrentState.get_cur_dict()
                 try:
-                    httpPlaySound(item,name)
+                    playSound(item,name)
                 except Exception as e:
                     self.play_sound_error_sig.emit(str(e))
                     print(f"play sound error = {e}")

@@ -92,15 +92,24 @@ def get_data_folder_url(data_folder):
     #return QUrl.fromLocalFile(str(Path(data_folder).joinpath("index.html")))
     return QUrl.fromLocalFile(data_folder+"/index.html")
 
-def httpPlaySound(sound_path,dict_name):
-    host,port=configs.get_http_server()
-    addr=f"http://{host}:{port}/{dict_name}/{sound_path}"
-    print(addr)
 
-    r=requests.get(addr)
-    with open("/tmp/mmdict_sound.tmp",'wb') as f:
-        f.write(r.content)
-    command=[configs.get_sound_player(), "/tmp/mmdict_sound.tmp"]
+def playSound(sound_path,dict_name):
+    protocol,host,port=configs.get_http_server()
+    path =None
+    if protocol == 'http':
+        addr=f"http://{host}:{port}/{dict_name}/{sound_path}"
+        print(addr)
+
+        r=requests.get(addr)
+        path="/tmp/mmdict_sound.tmp"
+        with open(path,'wb') as f:
+            f.write(r.content)
+    elif protocol == 'file':
+        path=f"{host}/{dict_name}/{sound_path}"
+    else:
+        raise Exception(f"Unknown protocol {protocol}")
+
+    command=[configs.get_sound_player(), path]
     # os.system(SOUND_PLAYER+" "+str(Path(data_folder).joinpath(item)))
     subprocess.Popen(command)
     #if res.returncode != 0:

@@ -158,8 +158,11 @@ class MainWindow(Widgets.QWidget):
         self.setMinimumWidth(700)
 
     def load_settings(self):
-        host, port = configs.get_http_server()
-        self.http_prefix = f"http://{host}:{port}"
+        protocol,host, port = configs.get_http_server()
+        #self.http_prefix = f"http://{host}:{port}"
+        self.prefix = f"{protocol}://{host}"
+        if protocol == "http":
+            self.prefix+=f":{port}"
         self.zoom_factor = configs.get_zoom_factor()
         self.welcome_word=configs.get_client_value(configs.WELCOME_WORD)
 
@@ -264,7 +267,7 @@ bottom:10px;
 
     def show_help(self):
         msgBox = Widgets.QMessageBox()
-        msgBox.setStyleSheet("QLabel{min-width: 600px;}");
+        msgBox.setStyleSheet("QLabel{min-width: 600px;}")
         msgBox.setWindowTitle("Help")
         msgBox.setText(HELP_TEXT)
         msgBox.exec()
@@ -274,7 +277,7 @@ bottom:10px;
     def __show_history_result(self,word,result_obj):
         name = CurrentState.get_cur_dict()
         html = pretty_dict_result(name, result_obj['results'].get(name, "No entry found"))
-        self.page.setHtml(html, QUrl(f"{self.http_prefix}/{name}/"))
+        self.page.setHtml(html, QUrl(f"{self.prefix}/{name}/"))
         ProgressDialog.hide_progress()
 
     def __show_history(self,item):
@@ -335,7 +338,8 @@ bottom:10px;
         name,  value = CurrentState.get_definition(dict_name)
         CurrentState.reset_history()
         #self.page.setHtml(html,get_data_folder_url(data_folder))
-        self.page.setHtml(pretty_dict_result(name, value), QUrl(f"{self.http_prefix}/{name}/"))
+
+        self.page.setHtml(pretty_dict_result(name, value), QUrl(f"{self.prefix}/{name}/"))
         CurrentState.add_history(CurrentState.word)
         self.view.page().runJavaScript("window.scrollTo(0,0);")
 

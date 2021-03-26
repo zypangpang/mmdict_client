@@ -29,6 +29,7 @@ class SettingDialog(QtWidgets.QDialog):
         self.server_widgets[configs.DICT_PORT]=self.ui.dict_port_box
         self.server_widgets[configs.HTTP_PORT]=self.ui.http_port_box
         self.server_widgets[configs.HTTP_HOST]=self.ui.http_host_edit
+        self.server_widgets[configs.PROTOCOL]=self.ui.protocol_edit
         # client
         self.client_widgets[configs.BG_COLOR]=self.ui.bg_box
         self.client_widgets[configs.SOUND_PLAYER]=self.ui.sound_player_edit
